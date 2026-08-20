@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FormulesRouteImport } from './routes/formules'
 import { Route as CatalogueIndexRouteImport } from './routes/catalogue.index'
 import { Route as CatalogueSlugRouteImport } from './routes/catalogue.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormulesRoute = FormulesRouteImport.update({
+  id: '/formules',
+  path: '/formules',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogueIndexRoute = CatalogueIndexRouteImport.update({
@@ -31,30 +37,34 @@ const CatalogueSlugRoute = CatalogueSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/formules': typeof FormulesRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
   '/catalogue/': typeof CatalogueIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/formules': typeof FormulesRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
   '/catalogue': typeof CatalogueIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/formules': typeof FormulesRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
   '/catalogue/': typeof CatalogueIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/catalogue/$slug' | '/catalogue/'
+  fullPaths: '/' | '/formules' | '/catalogue/$slug' | '/catalogue/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/catalogue/$slug' | '/catalogue'
-  id: '__root__' | '/' | '/catalogue/$slug' | '/catalogue/'
+  to: '/' | '/formules' | '/catalogue/$slug' | '/catalogue'
+  id: '__root__' | '/' | '/formules' | '/catalogue/$slug' | '/catalogue/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FormulesRoute: typeof FormulesRoute
   CatalogueSlugRoute: typeof CatalogueSlugRoute
   CatalogueIndexRoute: typeof CatalogueIndexRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/formules': {
+      id: '/formules'
+      path: '/formules'
+      fullPath: '/formules'
+      preLoaderRoute: typeof FormulesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/catalogue/': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FormulesRoute: FormulesRoute,
   CatalogueSlugRoute: CatalogueSlugRoute,
   CatalogueIndexRoute: CatalogueIndexRoute,
 }
