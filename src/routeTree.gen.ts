@@ -10,33 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as FormulesRouteImport } from './routes/formules'
+import { Route as TontinesRouteImport } from './routes/tontines'
+import { Route as CatalogueIndexRouteImport } from './routes/catalogue.index'
+import { Route as CatalogueSlugRouteImport } from './routes/catalogue.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormulesRoute = FormulesRouteImport.update({
+  id: '/formules',
+  path: '/formules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TontinesRoute = TontinesRouteImport.update({
+  id: '/tontines',
+  path: '/tontines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogueIndexRoute = CatalogueIndexRouteImport.update({
+  id: '/catalogue/',
+  path: '/catalogue/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogueSlugRoute = CatalogueSlugRouteImport.update({
+  id: '/catalogue/$slug',
+  path: '/catalogue/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/formules': typeof FormulesRoute
+  '/tontines': typeof TontinesRoute
+  '/catalogue/$slug': typeof CatalogueSlugRoute
+  '/catalogue/': typeof CatalogueIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/formules': typeof FormulesRoute
+  '/tontines': typeof TontinesRoute
+  '/catalogue/$slug': typeof CatalogueSlugRoute
+  '/catalogue': typeof CatalogueIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/formules': typeof FormulesRoute
+  '/tontines': typeof TontinesRoute
+  '/catalogue/$slug': typeof CatalogueSlugRoute
+  '/catalogue/': typeof CatalogueIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/formules'
+    | '/tontines'
+    | '/catalogue/$slug'
+    | '/catalogue/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/formules'
+    | '/tontines'
+    | '/catalogue/$slug'
+    | '/catalogue'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/formules'
+    | '/tontines'
+    | '/catalogue/$slug'
+    | '/catalogue/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  FormulesRoute: typeof FormulesRoute
+  TontinesRoute: typeof TontinesRoute
+  CatalogueSlugRoute: typeof CatalogueSlugRoute
+  CatalogueIndexRoute: typeof CatalogueIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +117,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/formules': {
+      id: '/formules'
+      path: '/formules'
+      fullPath: '/formules'
+      preLoaderRoute: typeof FormulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tontines': {
+      id: '/tontines'
+      path: '/tontines'
+      fullPath: '/tontines'
+      preLoaderRoute: typeof TontinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalogue/': {
+      id: '/catalogue/'
+      path: '/catalogue'
+      fullPath: '/catalogue/'
+      preLoaderRoute: typeof CatalogueIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalogue/$slug': {
+      id: '/catalogue/$slug'
+      path: '/catalogue/$slug'
+      fullPath: '/catalogue/$slug'
+      preLoaderRoute: typeof CatalogueSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  FormulesRoute: FormulesRoute,
+  TontinesRoute: TontinesRoute,
+  CatalogueSlugRoute: CatalogueSlugRoute,
+  CatalogueIndexRoute: CatalogueIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
