@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -257,7 +258,7 @@ function DashboardPage() {
   );
 }
 
-function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function StatCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card/70 p-5 backdrop-blur-xl">
       <div className="flex items-center gap-2 text-muted-foreground">
@@ -269,7 +270,7 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="rounded-3xl border border-border/60 bg-card/70 p-6 backdrop-blur-xl">
       <h2 className="font-display text-lg font-semibold tracking-tight">{title}</h2>
@@ -278,7 +279,7 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-function Empty({ text, cta }: { text: string; cta: React.ReactNode }) {
+function Empty({ text, cta }: { text: string; cta: ReactNode }) {
   return (
     <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center">
       <p className="text-sm text-muted-foreground">{text}</p>
