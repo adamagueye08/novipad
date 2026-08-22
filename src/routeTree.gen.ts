@@ -10,15 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FormulesRouteImport } from './routes/formules'
 import { Route as TontinesRouteImport } from './routes/tontines'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as CatalogueIndexRouteImport } from './routes/catalogue.index'
 import { Route as CatalogueSlugRouteImport } from './routes/catalogue.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -36,6 +42,11 @@ const TontinesRoute = TontinesRouteImport.update({
   path: '/tontines',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const CatalogueIndexRoute = CatalogueIndexRouteImport.update({
   id: '/catalogue/',
   path: '/catalogue/',
@@ -52,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/formules': typeof FormulesRoute
   '/tontines': typeof TontinesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
   '/catalogue/': typeof CatalogueIndexRoute
 }
@@ -60,15 +72,18 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/formules': typeof FormulesRoute
   '/tontines': typeof TontinesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
   '/catalogue': typeof CatalogueIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/formules': typeof FormulesRoute
   '/tontines': typeof TontinesRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
   '/catalogue/': typeof CatalogueIndexRoute
 }
@@ -79,6 +94,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/formules'
     | '/tontines'
+    | '/dashboard'
     | '/catalogue/$slug'
     | '/catalogue/'
   fileRoutesByTo: FileRoutesByTo
@@ -87,20 +103,24 @@ export interface FileRouteTypes {
     | '/auth'
     | '/formules'
     | '/tontines'
+    | '/dashboard'
     | '/catalogue/$slug'
     | '/catalogue'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/auth'
     | '/formules'
     | '/tontines'
+    | '/_authenticated/dashboard'
     | '/catalogue/$slug'
     | '/catalogue/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   FormulesRoute: typeof FormulesRoute
   TontinesRoute: typeof TontinesRoute
@@ -115,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -138,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TontinesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/catalogue/': {
       id: '/catalogue/'
       path: '/catalogue'
@@ -155,8 +189,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   FormulesRoute: FormulesRoute,
   TontinesRoute: TontinesRoute,

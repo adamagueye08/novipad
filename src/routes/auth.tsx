@@ -13,8 +13,8 @@ const DESCRIPTION =
   "Accédez à votre espace client iPad Rythme pour suivre vos commandes, votre épargne Flex et vos cotisations de tontine.";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    mode: search.mode === "signup" ? ("signup" as const) : ("login" as const),
+  validateSearch: (search: Record<string, unknown>): { mode?: "signup" | "login" } => ({
+    mode: search['mode'] === "signup" ? "signup" : "login",
   }),
   head: () => ({
     meta: [
