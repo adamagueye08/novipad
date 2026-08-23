@@ -100,11 +100,8 @@ function TontinesPage() {
                   </p>
                 )}
 
-                <Button asChild variant="hero" className="mt-7 w-full">
-                  <Link to="/auth" search={{ mode: "signup" }}>
-                    Demander à rejoindre
-                  </Link>
-                </Button>
+                <JoinButton tontineId={t.id} />
+
               </article>
             ))}
           </div>
