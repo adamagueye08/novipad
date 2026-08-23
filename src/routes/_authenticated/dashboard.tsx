@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   LogOut,
   Package,
@@ -15,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { Input } from "@/components/ui/input";
 import { formatFcfa, formatDate, progressPercent } from "@/lib/format";
+import { depositToFlexFn, payContributionFn } from "@/lib/checkout.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -200,6 +205,13 @@ function DashboardPage() {
                       <p className="mt-2 text-xs text-muted-foreground">
                         {formatFcfa(f.paid_amount)} sur {formatFcfa(f.target_amount)}
                       </p>
+                      {f.status === "ACTIVE" && (
+                        <DepositForm
+                          flexAccountId={f.id}
+                          remaining={Number(f.target_amount) - Number(f.paid_amount)}
+                          onDone={() => flex.refetch()}
+                        />
+                      )}
                     </li>
                   );
                 })}
@@ -223,7 +235,12 @@ function DashboardPage() {
                         Cotisation {formatFcfa(t.tontines?.contribution_amount)} · {t.status}
                       </p>
                     </div>
-                    <p className="text-sm font-semibold">{formatFcfa(t.paid_amount)}</p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-sm font-semibold">{formatFcfa(t.paid_amount)}</p>
+                      {["APPROVED", "ACTIVE"].includes(t.status) && (
+                        <ContributionButton memberId={t.id} onDone={() => tontines.refetch()} />
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -287,5 +304,77 @@ function Empty({ text, cta }: { text: string; cta: ReactNode }) {
         {cta}
       </div>
     </div>
+  );
+}
+
+function DepositForm({
+  flexAccountId,
+  remaining,
+  onDone,
+}: {
+  flexAccountId: string;
+  remaining: number;
+  onDone: () => void;
+}) {
+  const deposit = useServerFn(depositToFlexFn);
+  const [amount, setAmount] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const value = Number(amount);
+    if (!value || value <= 0) return;
+    setBusy(true);
+    try {
+      await deposit({ data: { flexAccountId, amount: value, method: "WAVE" } });
+      toast.success("Versement enregistré.");
+      setAmount("");
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Une erreur est survenue.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="mt-3 flex items-center gap-2">
+      <Input
+        type="number"
+        min={1}
+        max={remaining}
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        placeholder={`Verser (reste ${formatFcfa(remaining)})`}
+        className="h-9"
+      />
+      <Button type="submit" size="sm" variant="hero" disabled={busy}>
+        {busy ? "…" : "Verser"}
+      </Button>
+    </form>
+  );
+}
+
+function ContributionButton({ memberId, onDone }: { memberId: string; onDone: () => void }) {
+  const pay = useServerFn(payContributionFn);
+  const [busy, setBusy] = useState(false);
+
+  async function onPay() {
+    setBusy(true);
+    try {
+      const res = await pay({ data: { memberId, method: "WAVE" } });
+      toast.success(`Cotisation de ${formatFcfa(res.amount)} enregistrée.`);
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Une erreur est survenue.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Button size="sm" variant="outline" onClick={onPay} disabled={busy}>
+      {busy ? "…" : "Cotiser"}
+    </Button>
   );
 }
