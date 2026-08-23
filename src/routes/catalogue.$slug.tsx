@@ -105,10 +105,11 @@ function ProductPage() {
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <Button asChild variant="hero">
-                  <Link to="/auth" search={{ mode: "signup" }}>
+                  <Link to="/commander/$slug" params={{ slug: product.slug }}>
                     Choisir cet iPad
                   </Link>
                 </Button>
+
                 <Button asChild variant="outline">
                   <Link to="/formules">Comparer les formules</Link>
                 </Button>

@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
 import { Users, CalendarClock, Tablet } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { tontinesQuery } from "@/lib/api";
 import { formatFcfa, formatDate, FREQUENCY_LABELS } from "@/lib/format";
+import { useAuth } from "@/hooks/use-auth";
+import { joinTontineFn } from "@/lib/checkout.functions";
 
 const TITLE = "Tontines iPad ouvertes — iPad Rythme";
 const DESCRIPTION =
@@ -100,11 +105,8 @@ function TontinesPage() {
                   </p>
                 )}
 
-                <Button asChild variant="hero" className="mt-7 w-full">
-                  <Link to="/auth" search={{ mode: "signup" }}>
-                    Demander à rejoindre
-                  </Link>
-                </Button>
+                <JoinButton tontineId={t.id} />
+
               </article>
             ))}
           </div>
@@ -112,5 +114,43 @@ function TontinesPage() {
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+function JoinButton({ tontineId }: { tontineId: string }) {
+  const { user, loading } = useAuth();
+  const join = useServerFn(joinTontineFn);
+  const [busy, setBusy] = useState(false);
+
+  if (loading || !user) {
+    return (
+      <Button asChild variant="hero" className="mt-7 w-full">
+        <Link to="/auth" search={{ mode: "signup" }}>
+          Demander à rejoindre
+        </Link>
+      </Button>
+    );
+  }
+
+  async function onJoin() {
+    setBusy(true);
+    try {
+      const res = await join({ data: { tontineId } });
+      toast.success(
+        res.created
+          ? "Demande d'adhésion envoyée. Elle sera validée par notre équipe."
+          : "Vous avez déjà une demande pour cette tontine.",
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Une erreur est survenue.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Button variant="hero" className="mt-7 w-full" onClick={onJoin} disabled={busy}>
+      {busy ? "Envoi…" : "Demander à rejoindre"}
+    </Button>
   );
 }
