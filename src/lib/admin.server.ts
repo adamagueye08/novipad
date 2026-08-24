@@ -1,0 +1,397 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
+type Client = SupabaseClient<Database>;
+
+/** Vérifie côté serveur, avec le client RLS de l'appelant, qu'il fait partie du staff. */
+export async function ensureStaff(client: Client, userId: string) {
+  const { data, error } = await client.rpc("is_staff", { _user_id: userId });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Accès refusé: réservé à l'équipe interne.");
+  return true;
+}
+
+export async function ensureRole(client: Client, userId: string, role: AppRole) {
+  const { data, error } = await client.rpc("has_role", { _user_id: userId, _role: role });
+  if (error) throw new Error(error.message);
+  return Boolean(data);
+}
+
+async function logAudit(input: {
+  actorId: string;
+  action: string;
+  entityType?: string;
+  entityId?: string | null;
+  oldValue?: unknown;
+  newValue?: unknown;
+}) {
+  await supabaseAdmin.from("audit_logs").insert({
+    actor_id: input.actorId,
+    action: input.action,
+    entity_type: input.entityType ?? null,
+    entity_id: input.entityId ?? null,
+    old_value: (input.oldValue ?? null) as never,
+    new_value: (input.newValue ?? null) as never,
+  });
+}
+
+export async function getMyRoles(client: Client, userId: string) {
+  const { data, error } = await client.from("user_roles").select("role").eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => r.role as AppRole);
+}
+
+export async function getOverview() {
+  const [orders, payments, flex, members, products, users] = await Promise.all([
+    supabaseAdmin.from("orders").select("id,status,amount,formula,created_at"),
+    supabaseAdmin.from("payments").select("id,status,amount,created_at,payment_method"),
+    supabaseAdmin.from("flex_accounts").select("id,status,paid_amount,target_amount"),
+    supabaseAdmin.from("tontine_members").select("id,status"),
+    supabaseAdmin.from("products").select("id,model,stock_quantity,low_stock_threshold,is_active"),
+    supabaseAdmin.from("profiles").select("id,created_at,status"),
+  ]);
+
+  const orderRows = orders.data ?? [];
+  const paymentRows = payments.data ?? [];
+  const flexRows = flex.data ?? [];
+  const memberRows = members.data ?? [];
+  const productRows = products.data ?? [];
+
+  const revenue = paymentRows
+    .filter((p) => p.status === "SUCCESS")
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+
+  const byMonth = new Map<string, number>();
+  for (const p of paymentRows) {
+    if (p.status !== "SUCCESS") continue;
+    const key = String(p.created_at).slice(0, 7);
+    byMonth.set(key, (byMonth.get(key) ?? 0) + Number(p.amount));
+  }
+
+  const formulaSplit = { CASH: 0, FLEX: 0, TONTINE: 0 } as Record<string, number>;
+  for (const o of orderRows) formulaSplit[o.formula] = (formulaSplit[o.formula] ?? 0) + 1;
+
+  return {
+    revenue,
+    pendingPayments: paymentRows.filter((p) => p.status === "PENDING").length,
+    ordersTotal: orderRows.length,
+    ordersPending: orderRows.filter((o) => ["PENDING", "PAID", "CONFIRMED", "PREPARING"].includes(o.status)).length,
+    flexActive: flexRows.filter((f) => f.status === "ACTIVE").length,
+    flexSaved: flexRows.reduce((s, f) => s + Number(f.paid_amount), 0),
+    membersPending: memberRows.filter((m) => m.status === "PENDING").length,
+    membersActive: memberRows.filter((m) => ["APPROVED", "ACTIVE"].includes(m.status)).length,
+    clients: (users.data ?? []).length,
+    stockTotal: productRows.reduce((s, p) => s + Number(p.stock_quantity), 0),
+    lowStock: productRows
+      .filter((p) => Number(p.stock_quantity) <= Number(p.low_stock_threshold))
+      .map((p) => ({ id: p.id, model: p.model, stock: Number(p.stock_quantity) })),
+    revenueByMonth: [...byMonth.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([month, amount]) => ({ month, amount })),
+    formulaSplit,
+  };
+}
+
+export async function listOrders() {
+  const { data, error } = await supabaseAdmin
+    .from("orders")
+    .select(
+      "id,reference,status,formula,amount,created_at,user_id,products(model),profiles:user_id(first_name,last_name,phone),deliveries(id,status,address,phone)",
+    )
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function updateOrderStatus(input: {
+  actorId: string;
+  orderId: string;
+  status: Database["public"]["Enums"]["order_status"];
+}) {
+  const { data: before } = await supabaseAdmin
+    .from("orders")
+    .select("id,status,user_id,reference")
+    .eq("id", input.orderId)
+    .maybeSingle();
+  if (!before) throw new Error("Commande introuvable.");
+
+  const { error } = await supabaseAdmin
+    .from("orders")
+    .update({ status: input.status })
+    .eq("id", input.orderId);
+  if (error) throw new Error(error.message);
+
+  const deliveryStatus =
+    input.status === "PREPARING"
+      ? "PREPARING"
+      : input.status === "SHIPPED"
+        ? "SHIPPED"
+        : input.status === "DELIVERED" || input.status === "COMPLETED"
+          ? "DELIVERED"
+          : null;
+  if (deliveryStatus) {
+    await supabaseAdmin
+      .from("deliveries")
+      .update({ status: deliveryStatus })
+      .eq("order_id", input.orderId);
+  }
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: before.user_id,
+    title: `Commande ${before.reference} mise à jour`,
+    body: `Nouveau statut: ${input.status}.`,
+    channel: "IN_APP",
+    audience: "USER",
+  });
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "order.status_update",
+    entityType: "orders",
+    entityId: input.orderId,
+    oldValue: { status: before.status },
+    newValue: { status: input.status },
+  });
+  return { ok: true };
+}
+
+export async function listPayments() {
+  const { data, error } = await supabaseAdmin
+    .from("payments")
+    .select(
+      "id,amount,status,payment_method,external_reference,created_at,confirmed_at,user_id,order_id,flex_account_id,tontine_id,profiles:user_id(first_name,last_name)",
+    )
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function decidePayment(input: {
+  actorId: string;
+  paymentId: string;
+  status: Database["public"]["Enums"]["payment_status"];
+}) {
+  const { data: before } = await supabaseAdmin
+    .from("payments")
+    .select("id,status,order_id,user_id,amount")
+    .eq("id", input.paymentId)
+    .maybeSingle();
+  if (!before) throw new Error("Paiement introuvable.");
+
+  const { error } = await supabaseAdmin
+    .from("payments")
+    .update({
+      status: input.status,
+      confirmed_at: input.status === "SUCCESS" ? new Date().toISOString() : null,
+    })
+    .eq("id", input.paymentId);
+  if (error) throw new Error(error.message);
+
+  if (input.status === "SUCCESS" && before.order_id) {
+    await supabaseAdmin.from("orders").update({ status: "PAID" }).eq("id", before.order_id);
+  }
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "payment.status_update",
+    entityType: "payments",
+    entityId: input.paymentId,
+    oldValue: { status: before.status },
+    newValue: { status: input.status },
+  });
+  return { ok: true };
+}
+
+export async function listProductsAdmin() {
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .select(
+      "id,slug,model,storage,color,condition,price_cash,price_flex,price_tontine,purchase_cost_usd,shipping_cost_usd,stock_quantity,low_stock_threshold,is_active",
+    )
+    .order("model", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function updateProduct(input: {
+  actorId: string;
+  productId: string;
+  patch: {
+    price_cash?: number;
+    price_flex?: number;
+    price_tontine?: number;
+    stock_quantity?: number;
+    low_stock_threshold?: number;
+    is_active?: boolean;
+  };
+}) {
+  const { data: before } = await supabaseAdmin
+    .from("products")
+    .select("id,stock_quantity,price_cash,price_flex,price_tontine,is_active")
+    .eq("id", input.productId)
+    .maybeSingle();
+  if (!before) throw new Error("Produit introuvable.");
+
+  const { error } = await supabaseAdmin
+    .from("products")
+    .update(input.patch)
+    .eq("id", input.productId);
+  if (error) throw new Error(error.message);
+
+  if (
+    typeof input.patch.stock_quantity === "number" &&
+    input.patch.stock_quantity !== Number(before.stock_quantity)
+  ) {
+    await supabaseAdmin.from("inventory_movements").insert({
+      product_id: input.productId,
+      movement_type: "ADJUSTMENT",
+      quantity: input.patch.stock_quantity - Number(before.stock_quantity),
+      note: "Ajustement back-office",
+      created_by: input.actorId,
+    });
+  }
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "product.update",
+    entityType: "products",
+    entityId: input.productId,
+    oldValue: before,
+    newValue: input.patch,
+  });
+  return { ok: true };
+}
+
+export async function listUsersAdmin() {
+  const [profiles, roles] = await Promise.all([
+    supabaseAdmin
+      .from("profiles")
+      .select("id,first_name,last_name,phone,email,status,created_at")
+      .order("created_at", { ascending: false })
+      .limit(300),
+    supabaseAdmin.from("user_roles").select("user_id,role"),
+  ]);
+  if (profiles.error) throw new Error(profiles.error.message);
+  const roleMap = new Map<string, AppRole[]>();
+  for (const r of roles.data ?? []) {
+    roleMap.set(r.user_id, [...(roleMap.get(r.user_id) ?? []), r.role as AppRole]);
+  }
+  return (profiles.data ?? []).map((p) => ({ ...p, roles: roleMap.get(p.id) ?? [] }));
+}
+
+export async function setUserRole(input: { actorId: string; userId: string; role: AppRole }) {
+  await supabaseAdmin.from("user_roles").delete().eq("user_id", input.userId);
+  const { error } = await supabaseAdmin
+    .from("user_roles")
+    .insert({ user_id: input.userId, role: input.role });
+  if (error) throw new Error(error.message);
+  await logAudit({
+    actorId: input.actorId,
+    action: "user.role_set",
+    entityType: "user_roles",
+    entityId: input.userId,
+    newValue: { role: input.role },
+  });
+  return { ok: true };
+}
+
+export async function setUserStatus(input: {
+  actorId: string;
+  userId: string;
+  status: Database["public"]["Enums"]["account_status"];
+}) {
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update({ status: input.status })
+    .eq("id", input.userId);
+  if (error) throw new Error(error.message);
+  await logAudit({
+    actorId: input.actorId,
+    action: "user.status_set",
+    entityType: "profiles",
+    entityId: input.userId,
+    newValue: { status: input.status },
+  });
+  return { ok: true };
+}
+
+export async function listTontinesAdmin() {
+  const { data, error } = await supabaseAdmin
+    .from("tontines")
+    .select(
+      "id,name,status,price,contribution_amount,frequency,duration_months,member_capacity,ipads_available,start_date,tontine_members(id,status,paid_amount,user_id,profiles:user_id(first_name,last_name,phone))",
+    )
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function decideMembership(input: {
+  actorId: string;
+  memberId: string;
+  decision: "APPROVED" | "REMOVED" | "SUSPENDED" | "ACTIVE";
+}) {
+  const { data: member } = await supabaseAdmin
+    .from("tontine_members")
+    .select("id,status,user_id,tontine_id,tontines(name)")
+    .eq("id", input.memberId)
+    .maybeSingle();
+  if (!member) throw new Error("Adhésion introuvable.");
+
+  const { error } = await supabaseAdmin
+    .from("tontine_members")
+    .update({ status: input.decision })
+    .eq("id", input.memberId);
+  if (error) throw new Error(error.message);
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: member.user_id,
+    title: `Adhésion tontine ${input.decision === "REMOVED" ? "refusée" : "mise à jour"}`,
+    body: `Tontine « ${(member as { tontines?: { name?: string } }).tontines?.name ?? ""} » — statut: ${input.decision}.`,
+    channel: "IN_APP",
+    audience: "USER",
+    tontine_id: member.tontine_id,
+  });
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "tontine.member_decision",
+    entityType: "tontine_members",
+    entityId: input.memberId,
+    oldValue: { status: member.status },
+    newValue: { status: input.decision },
+  });
+  return { ok: true };
+}
+
+export async function updateTontineStatus(input: {
+  actorId: string;
+  tontineId: string;
+  status: Database["public"]["Enums"]["tontine_status"];
+}) {
+  const { error } = await supabaseAdmin
+    .from("tontines")
+    .update({ status: input.status })
+    .eq("id", input.tontineId);
+  if (error) throw new Error(error.message);
+  await logAudit({
+    actorId: input.actorId,
+    action: "tontine.status_update",
+    entityType: "tontines",
+    entityId: input.tontineId,
+    newValue: { status: input.status },
+  });
+  return { ok: true };
+}
+
+export async function listAuditLogs() {
+  const { data, error } = await supabaseAdmin
+    .from("audit_logs")
+    .select("id,action,entity_type,entity_id,created_at,actor_id,new_value")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
