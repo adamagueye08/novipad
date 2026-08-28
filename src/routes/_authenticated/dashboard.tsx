@@ -27,6 +27,7 @@ import {
   depositToFlexFn,
   payContributionFn,
   requestFlexCancellationFn,
+  flexSettingsFn,
 } from "@/lib/checkout.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -321,6 +322,7 @@ function DashboardPage() {
                           <div className="mt-3 flex items-center justify-end">
                             <CancelFlexDialog
                               flexAccountId={f.id}
+                              paidAmount={Number(f.paid_amount)}
                               onDone={() => flexCancellations.refetch()}
                             />
                           </div>
@@ -498,20 +500,36 @@ function DepositForm({
 
 function CancelFlexDialog({
   flexAccountId,
+  paidAmount,
   onDone,
 }: {
   flexAccountId: string;
+  paidAmount: number;
   onDone: () => void;
 }) {
   const requestCancellation = useServerFn(requestFlexCancellationFn);
+  const fetchFlexSettings = useServerFn(flexSettingsFn);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [keepAsCredit, setKeepAsCredit] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const settings = useQuery({
+    queryKey: ["flex-settings"],
+    enabled: open,
+    queryFn: () => fetchFlexSettings(),
+  });
+
+  const feePercent = settings.data?.cancellationFeePercent ?? 10;
+  const feeAmount = keepAsCredit ? 0 : Math.round((paidAmount * feePercent) / 100);
+  const refundableAmount = paidAmount - feeAmount;
 
   async function onConfirm() {
     setBusy(true);
     try {
-      await requestCancellation({ data: { flexAccountId, reason: reason.trim() || undefined } });
+      await requestCancellation({
+        data: { flexAccountId, reason: reason.trim() || undefined, keepAsCredit },
+      });
       toast.success("Demande d'annulation envoyée. Nous revenons vers vous rapidement.");
       setOpen(false);
       setReason("");
@@ -535,9 +553,62 @@ function CancelFlexDialog({
           <DialogTitle>Annuler ce compte Flex ?</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Votre demande sera examinée par notre équipe. Le montant déjà versé vous sera remboursé ou
-          conservé en crédit, selon les conditions en vigueur.
+          Votre demande sera examinée par notre équipe avant confirmation finale.
         </p>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Que souhaitez-vous faire du montant versé ?</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setKeepAsCredit(false)}
+              className={`rounded-xl border p-3 text-left text-sm transition ${
+                !keepAsCredit
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
+              }`}
+            >
+              <p className="font-medium">Être remboursé</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Frais d'annulation de {feePercent}% appliqués
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setKeepAsCredit(true)}
+              className={`rounded-xl border p-3 text-left text-sm transition ${
+                keepAsCredit
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
+              }`}
+            >
+              <p className="font-medium">Garder en crédit</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Aucun frais, utilisable plus tard
+              </p>
+            </button>
+          </div>
+        </div>
+
+        <dl className="space-y-1.5 rounded-xl bg-muted/50 p-3 text-sm">
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Montant versé</dt>
+            <dd className="font-medium">{formatFcfa(paidAmount)}</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Frais d'annulation</dt>
+            <dd className="font-medium">
+              {feeAmount > 0 ? `- ${formatFcfa(feeAmount)}` : "Aucun"}
+            </dd>
+          </div>
+          <div className="flex justify-between border-t border-border/60 pt-1.5">
+            <dt className="font-medium">
+              {keepAsCredit ? "Crédit conservé" : "Montant remboursable"}
+            </dt>
+            <dd className="font-semibold">{formatFcfa(refundableAmount)}</dd>
+          </div>
+        </dl>
+
         <div className="space-y-2">
           <label htmlFor="cancel-reason" className="text-sm font-medium">
             Raison (optionnel)

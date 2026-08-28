@@ -60,6 +60,7 @@ export const requestFlexCancellationFn = createServerFn({ method: "POST" })
       .object({
         flexAccountId: z.string().uuid(),
         reason: z.string().max(500).optional(),
+        keepAsCredit: z.boolean().default(false),
       })
       .parse(data),
   )
@@ -67,6 +68,11 @@ export const requestFlexCancellationFn = createServerFn({ method: "POST" })
     const { requestFlexCancellation } = await import("@/lib/checkout.server");
     return requestFlexCancellation({ ...data, userId: context.userId });
   });
+
+export const flexSettingsFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { getFlexSettings } = await import("@/lib/checkout.server");
+  return getFlexSettings();
+});
 
 export const joinTontineFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -260,6 +260,12 @@ export async function depositToFlex(input: {
   const remaining = Number(account.target_amount) - Number(account.paid_amount);
   if (input.amount > remaining) throw new Error("Le montant dépasse le solde restant à payer.");
 
+  const { minDeposit } = await getFlexSettings();
+  // Le minimum ne s'applique pas au tout dernier versement (solde restant < minimum).
+  if (input.amount < minDeposit && input.amount < remaining) {
+    throw new Error(`Le dépôt minimum est de ${minDeposit} FCFA.`);
+  }
+
   const payment = await recordPayment({
     userId: input.userId,
     amount: input.amount,
@@ -292,10 +298,24 @@ export async function depositToFlex(input: {
   };
 }
 
+export async function getFlexSettings() {
+  const { data } = await supabaseAdmin
+    .from("settings")
+    .select("value")
+    .eq("key", "flex")
+    .maybeSingle();
+  const value = (data?.value ?? {}) as { min_deposit?: number; cancellation_fee_percent?: number };
+  return {
+    minDeposit: Number(value.min_deposit ?? 5000),
+    cancellationFeePercent: Number(value.cancellation_fee_percent ?? 10),
+  };
+}
+
 export async function requestFlexCancellation(input: {
   userId: string;
   flexAccountId: string;
   reason?: string | undefined;
+  keepAsCredit: boolean;
 }) {
   const { data: account, error } = await supabaseAdmin
     .from("flex_accounts")
@@ -317,6 +337,16 @@ export async function requestFlexCancellation(input: {
   if (pending) return { requestId: pending.id, created: false };
 
   const paidAmount = Number(account.paid_amount);
+  const { cancellationFeePercent } = await getFlexSettings();
+
+  // Garder le montant en crédit boutique évite un remboursement en cash
+  // (et ses frais de transfert Wave/Orange Money) : aucun frais dans ce cas.
+  // Un remboursement en espèces retient les frais d'annulation configurés.
+  const feeAmount = input.keepAsCredit
+    ? 0
+    : Math.round((paidAmount * cancellationFeePercent) / 100);
+  const refundableAmount = paidAmount - feeAmount;
+
   const { data, error: insertError } = await supabaseAdmin
     .from("flex_cancellations")
     .insert({
@@ -324,9 +354,9 @@ export async function requestFlexCancellation(input: {
       user_id: input.userId,
       reason: input.reason ?? null,
       paid_amount: paidAmount,
-      refundable_amount: paidAmount,
-      fee_amount: 0,
-      keep_as_credit: false,
+      refundable_amount: refundableAmount,
+      fee_amount: feeAmount,
+      keep_as_credit: input.keepAsCredit,
       status: "PENDING",
     })
     .select("id")
@@ -336,7 +366,9 @@ export async function requestFlexCancellation(input: {
   await supabaseAdmin.from("notifications").insert({
     user_id: input.userId,
     title: "Demande d'annulation Flex envoyée",
-    body: "Votre demande est en cours d'examen. Le montant remboursable vous sera confirmé.",
+    body: input.keepAsCredit
+      ? `Votre demande est en cours d'examen. ${refundableAmount} FCFA seront conservés en crédit, sans frais.`
+      : `Votre demande est en cours d'examen. Montant remboursable estimé : ${refundableAmount} FCFA (frais de ${cancellationFeePercent}% déduits).`,
     channel: "IN_APP",
     audience: "USER",
   });
