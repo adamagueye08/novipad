@@ -94,22 +94,61 @@ export const adminProductsFn = createServerFn({ method: "GET" })
     return listProductsAdmin();
   });
 
+const productPatchSchema = z.object({
+  model: z.string().min(1).max(120).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(160)
+    .regex(/^[a-z0-9-]+$/, "Slug: minuscules, chiffres et tirets uniquement.")
+    .optional(),
+  generation: z.string().max(60).nullable().optional(),
+  storage: z.string().max(60).nullable().optional(),
+  color: z.string().max(60).nullable().optional(),
+  connectivity: z.string().max(60).nullable().optional(),
+  condition: z.string().max(60).nullable().optional(),
+  description: z.string().max(2000).nullable().optional(),
+  images: z.array(z.string().url()).optional(),
+  warranty_months: z.number().int().nonnegative().optional(),
+  purchase_cost_usd: z.number().nonnegative().optional(),
+  shipping_cost_usd: z.number().nonnegative().optional(),
+  price_cash: z.number().int().nonnegative().optional(),
+  price_flex: z.number().int().nonnegative().optional(),
+  price_tontine: z.number().int().nonnegative().optional(),
+  stock_quantity: z.number().int().nonnegative().optional(),
+  low_stock_threshold: z.number().int().nonnegative().optional(),
+  is_active: z.boolean().optional(),
+});
+
+export const adminCreateProductFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        product: productPatchSchema.extend({
+          model: z.string().min(1).max(120),
+          slug: z
+            .string()
+            .min(1)
+            .max(160)
+            .regex(/^[a-z0-9-]+$/, "Slug: minuscules, chiffres et tirets uniquement."),
+        }),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, createProduct } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return createProduct({ product: data.product, actorId: context.userId });
+  });
+
 export const adminUpdateProductFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({
         productId: z.string().uuid(),
-        patch: z
-          .object({
-            price_cash: z.number().int().nonnegative().optional(),
-            price_flex: z.number().int().nonnegative().optional(),
-            price_tontine: z.number().int().nonnegative().optional(),
-            stock_quantity: z.number().int().nonnegative().optional(),
-            low_stock_threshold: z.number().int().nonnegative().optional(),
-            is_active: z.boolean().optional(),
-          })
-          .refine((p) => Object.keys(p).length > 0, "Aucune modification."),
+        patch: productPatchSchema.refine((p) => Object.keys(p).length > 0, "Aucune modification."),
       })
       .parse(data),
   )
@@ -144,9 +183,7 @@ export const adminSetRoleFn = createServerFn({ method: "POST" })
 export const adminSetUserStatusFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z
-      .object({ userId: z.string().uuid(), status: z.enum(["ACTIVE", "SUSPENDED"]) })
-      .parse(data),
+    z.object({ userId: z.string().uuid(), status: z.enum(["ACTIVE", "SUSPENDED"]) }).parse(data),
   )
   .handler(async ({ data, context }) => {
     const { ensureRole, setUserStatus } = await import("@/lib/admin.server");

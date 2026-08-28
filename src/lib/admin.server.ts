@@ -77,7 +77,9 @@ export async function getOverview() {
     revenue,
     pendingPayments: paymentRows.filter((p) => p.status === "PENDING").length,
     ordersTotal: orderRows.length,
-    ordersPending: orderRows.filter((o) => ["PENDING", "PAID", "CONFIRMED", "PREPARING"].includes(o.status)).length,
+    ordersPending: orderRows.filter((o) =>
+      ["PENDING", "PAID", "CONFIRMED", "PREPARING"].includes(o.status),
+    ).length,
     flexActive: flexRows.filter((f) => f.status === "ACTIVE").length,
     flexSaved: flexRows.reduce((s, f) => s + Number(f.paid_amount), 0),
     membersPending: memberRows.filter((m) => m.status === "PENDING").length,
@@ -87,7 +89,9 @@ export async function getOverview() {
     lowStock: productRows
       .filter((p) => Number(p.stock_quantity) <= Number(p.low_stock_threshold))
       .map((p) => ({ id: p.id, model: p.model, stock: Number(p.stock_quantity) })),
-    revenueByMonth: [...byMonth.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([month, amount]) => ({ month, amount })),
+    revenueByMonth: [...byMonth.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, amount]) => ({ month, amount })),
     formulaSplit,
   };
 }
@@ -204,39 +208,114 @@ export async function decidePayment(input: {
   return { ok: true };
 }
 
+const PRODUCT_ADMIN_FIELDS =
+  "id,slug,model,generation,storage,color,connectivity,condition,description,images,features,warranty_months,price_cash,price_flex,price_tontine,purchase_cost_usd,shipping_cost_usd,stock_quantity,low_stock_threshold,is_active,is_demo,created_at,updated_at";
+
 export async function listProductsAdmin() {
   const { data, error } = await supabaseAdmin
     .from("products")
-    .select(
-      "id,slug,model,storage,color,condition,price_cash,price_flex,price_tontine,purchase_cost_usd,shipping_cost_usd,stock_quantity,low_stock_threshold,is_active",
-    )
+    .select(PRODUCT_ADMIN_FIELDS)
     .order("model", { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];
 }
 
+type ProductPatch = {
+  model?: string | undefined;
+  slug?: string | undefined;
+  generation?: string | null | undefined;
+  storage?: string | null | undefined;
+  color?: string | null | undefined;
+  connectivity?: string | null | undefined;
+  condition?: string | null | undefined;
+  description?: string | null | undefined;
+  images?: string[] | undefined;
+  warranty_months?: number | undefined;
+  purchase_cost_usd?: number | undefined;
+  shipping_cost_usd?: number | undefined;
+  price_cash?: number | undefined;
+  price_flex?: number | undefined;
+  price_tontine?: number | undefined;
+  stock_quantity?: number | undefined;
+  low_stock_threshold?: number | undefined;
+  is_active?: boolean | undefined;
+};
+
+type NewProduct = ProductPatch & { model: string; slug: string };
+
+const PRICE_FIELDS = ["price_cash", "price_flex", "price_tontine"] as const;
+
+async function recordPriceHistory(input: {
+  productId: string;
+  actorId: string;
+  before: Record<string, unknown>;
+  patch: ProductPatch;
+}) {
+  const rows = PRICE_FIELDS.filter(
+    (field) =>
+      typeof input.patch[field] === "number" &&
+      Number(input.patch[field]) !== Number(input.before[field]),
+  ).map((field) => ({
+    product_id: input.productId,
+    field,
+    old_value: Number(input.before[field] ?? 0),
+    new_value: Number(input.patch[field]),
+    changed_by: input.actorId,
+  }));
+  if (rows.length > 0) {
+    await supabaseAdmin.from("price_history").insert(rows);
+  }
+}
+
+export async function createProduct(input: { actorId: string; product: NewProduct }) {
+  if (!input.product.model || !input.product.slug) {
+    throw new Error("Le modèle et le slug sont obligatoires.");
+  }
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .insert(input.product as any)
+    .select(PRODUCT_ADMIN_FIELDS)
+    .single();
+  if (error) throw new Error(error.message);
+
+  if (input.product.stock_quantity && input.product.stock_quantity > 0) {
+    await supabaseAdmin.from("inventory_movements").insert({
+      product_id: data.id,
+      movement_type: "RESTOCK",
+      quantity: input.product.stock_quantity,
+      note: "Stock initial à la création",
+      created_by: input.actorId,
+    });
+  }
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "product.create",
+    entityType: "products",
+    entityId: data.id,
+    oldValue: null,
+    newValue: input.product,
+  });
+  return data;
+}
+
 export async function updateProduct(input: {
   actorId: string;
   productId: string;
-  patch: {
-    price_cash?: number;
-    price_flex?: number;
-    price_tontine?: number;
-    stock_quantity?: number;
-    low_stock_threshold?: number;
-    is_active?: boolean;
-  };
+  patch: ProductPatch;
 }) {
   const { data: before } = await supabaseAdmin
     .from("products")
-    .select("id,stock_quantity,price_cash,price_flex,price_tontine,is_active")
+    .select(PRODUCT_ADMIN_FIELDS)
     .eq("id", input.productId)
     .maybeSingle();
   if (!before) throw new Error("Produit introuvable.");
 
   const { error } = await supabaseAdmin
     .from("products")
-    .update(input.patch)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update(input.patch as any)
     .eq("id", input.productId);
   if (error) throw new Error(error.message);
 
@@ -252,6 +331,13 @@ export async function updateProduct(input: {
       created_by: input.actorId,
     });
   }
+
+  await recordPriceHistory({
+    productId: input.productId,
+    actorId: input.actorId,
+    before,
+    patch: input.patch,
+  });
 
   await logAudit({
     actorId: input.actorId,

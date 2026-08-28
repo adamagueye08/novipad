@@ -21,13 +21,17 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
+// Pages construites : Vue d'ensemble et Produits & stock.
+// Commandes / Paiements / Tontines / Utilisateurs arrivent ensuite —
+// elles restent désactivées (plutôt que des liens vers des 404) tant
+// qu'elles ne sont pas branchées.
 const NAV = [
-  { to: "/admin", label: "Vue d'ensemble", icon: BarChart3 },
-  { to: "/admin/commandes", label: "Commandes", icon: ShoppingBag },
-  { to: "/admin/paiements", label: "Paiements", icon: CreditCard },
-  { to: "/admin/produits", label: "Produits & stock", icon: Boxes },
-  { to: "/admin/tontines", label: "Tontines", icon: ShieldCheck },
-  { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users },
+  { to: "/admin", label: "Vue d'ensemble", icon: BarChart3, ready: true },
+  { to: "/admin/produits", label: "Produits & stock", icon: Boxes, ready: true },
+  { to: "/admin/commandes", label: "Commandes", icon: ShoppingBag, ready: false },
+  { to: "/admin/paiements", label: "Paiements", icon: CreditCard, ready: false },
+  { to: "/admin/tontines", label: "Tontines", icon: ShieldCheck, ready: false },
+  { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, ready: false },
 ] as const;
 
 function AdminLayout() {
@@ -66,22 +70,36 @@ function AdminLayout() {
           <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
             {data.roles.join(" · ")}
           </span>
-          <Link to="/dashboard" className="ml-auto text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            to="/dashboard"
+            className="ml-auto text-sm text-muted-foreground hover:text-foreground"
+          >
             Espace client
           </Link>
         </div>
         <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pb-3">
-          {NAV.map(({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              activeOptions={{ exact: to === "/admin" }}
-              className="flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm text-muted-foreground transition hover:bg-muted/60 hover:text-foreground data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-            >
-              <Icon className="size-4" />
-              {label}
-            </Link>
-          ))}
+          {NAV.map(({ to, label, icon: Icon, ready }) =>
+            ready ? (
+              <Link
+                key={to}
+                to={to}
+                activeOptions={{ exact: to === "/admin" }}
+                className="flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm text-muted-foreground transition hover:bg-muted/60 hover:text-foreground data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+              >
+                <Icon className="size-4" />
+                {label}
+              </Link>
+            ) : (
+              <span
+                key={to}
+                title="Bientôt disponible"
+                className="flex cursor-not-allowed items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm text-muted-foreground/40"
+              >
+                <Icon className="size-4" />
+                {label}
+              </span>
+            ),
+          )}
         </nav>
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
