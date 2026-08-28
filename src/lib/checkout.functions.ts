@@ -23,10 +23,18 @@ export const placeCashOrderFn = createServerFn({ method: "POST" })
 
 export const openFlexAccountFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ productId: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        productId: z.string().uuid(),
+        address: z.string().min(5).max(300),
+        phone: z.string().min(6).max(30),
+      })
+      .parse(data),
+  )
   .handler(async ({ data, context }) => {
     const { openFlexAccount } = await import("@/lib/checkout.server");
-    return openFlexAccount({ productId: data.productId, userId: context.userId });
+    return openFlexAccount({ ...data, userId: context.userId });
   });
 
 export const depositToFlexFn = createServerFn({ method: "POST" })
@@ -43,6 +51,21 @@ export const depositToFlexFn = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { depositToFlex } = await import("@/lib/checkout.server");
     return depositToFlex({ ...data, userId: context.userId });
+  });
+
+export const requestFlexCancellationFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        flexAccountId: z.string().uuid(),
+        reason: z.string().max(500).optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { requestFlexCancellation } = await import("@/lib/checkout.server");
+    return requestFlexCancellation({ ...data, userId: context.userId });
   });
 
 export const joinTontineFn = createServerFn({ method: "POST" })

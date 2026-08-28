@@ -4,23 +4,30 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  LogOut,
-  Package,
-  PiggyBank,
-  Users,
-  Wallet,
-  ArrowRight,
-} from "lucide-react";
+import { LogOut, Package, PiggyBank, Users, Wallet, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Input } from "@/components/ui/input";
 import { formatFcfa, formatDate, progressPercent } from "@/lib/format";
-import { depositToFlexFn, payContributionFn } from "@/lib/checkout.functions";
+import {
+  depositToFlexFn,
+  payContributionFn,
+  requestFlexCancellationFn,
+} from "@/lib/checkout.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -49,6 +56,19 @@ const ORDER_STATUS_LABELS: Record<string, string> = {
   PREPARING: "En préparation",
   DELIVERED: "Livrée",
   CANCELLED: "Annulée",
+};
+
+const FLEX_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "En cours",
+  COMPLETED: "Complété",
+  CANCELLED: "Annulé",
+};
+
+const CANCELLATION_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Demande en cours d'examen",
+  APPROVED: "Annulation approuvée",
+  REJECTED: "Demande refusée",
+  REFUNDED: "Remboursé",
 };
 
 function DashboardPage() {
@@ -90,7 +110,38 @@ function DashboardPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("flex_accounts")
-        .select("id,target_amount,paid_amount,status,created_at,products(model,storage)")
+        .select(
+          "id,target_amount,paid_amount,status,created_at,delivery_address,delivery_phone,products(model,storage)",
+        )
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const flexAccountIds = (flex.data ?? []).map((f: any) => f.id);
+
+  const flexDeposits = useQuery({
+    queryKey: ["my-flex-deposits", flexAccountIds.join(",")],
+    enabled: flexAccountIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("flex_deposits")
+        .select("id,flex_account_id,amount,created_at")
+        .in("flex_account_id", flexAccountIds)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const flexCancellations = useQuery({
+    queryKey: ["my-flex-cancellations", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("flex_cancellations")
+        .select("id,flex_account_id,status,reason,refundable_amount,fee_amount,created_at")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -138,7 +189,9 @@ function DashboardPage() {
             <h1 className="font-display text-3xl font-semibold tracking-tight">
               Bonjour {fullName}
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">{profile.data?.phone ?? user?.email}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {profile.data?.phone ?? user?.email}
+            </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleSignOut}>
             <LogOut /> Déconnexion
@@ -146,10 +199,26 @@ function DashboardPage() {
         </div>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard icon={<Package className="h-4 w-4" />} label="Commandes" value={String(orders.data?.length ?? 0)} />
-          <StatCard icon={<Wallet className="h-4 w-4" />} label="Épargne Flex" value={formatFcfa(totalFlex)} />
-          <StatCard icon={<Users className="h-4 w-4" />} label="Tontines" value={String(tontines.data?.length ?? 0)} />
-          <StatCard icon={<PiggyBank className="h-4 w-4" />} label="Cotisations versées" value={formatFcfa(totalTontine)} />
+          <StatCard
+            icon={<Package className="h-4 w-4" />}
+            label="Commandes"
+            value={String(orders.data?.length ?? 0)}
+          />
+          <StatCard
+            icon={<Wallet className="h-4 w-4" />}
+            label="Épargne Flex"
+            value={formatFcfa(totalFlex)}
+          />
+          <StatCard
+            icon={<Users className="h-4 w-4" />}
+            label="Tontines"
+            value={String(tontines.data?.length ?? 0)}
+          />
+          <StatCard
+            icon={<PiggyBank className="h-4 w-4" />}
+            label="Cotisations versées"
+            value={formatFcfa(totalTontine)}
+          />
         </section>
 
         <section className="mt-10 grid gap-6 lg:grid-cols-2">
@@ -193,24 +262,96 @@ function DashboardPage() {
               <ul className="space-y-4">
                 {flex.data!.map((f: any) => {
                   const pct = progressPercent(Number(f.paid_amount), Number(f.target_amount));
+                  const deposits = (flexDeposits.data ?? []).filter(
+                    (d: any) => d.flex_account_id === f.id,
+                  );
+                  const pendingCancellation = (flexCancellations.data ?? []).find(
+                    (c: any) => c.flex_account_id === f.id && c.status === "PENDING",
+                  );
+                  const latestCancellation = (flexCancellations.data ?? []).find(
+                    (c: any) => c.flex_account_id === f.id,
+                  );
                   return (
                     <li key={f.id} className="rounded-2xl border border-border/60 p-4">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-sm font-medium">
                           {f.products?.model ?? "iPad"} {f.products?.storage ?? ""}
                         </p>
-                        <span className="text-xs text-muted-foreground">{pct}%</span>
+                        <Badge
+                          variant={
+                            f.status === "COMPLETED"
+                              ? "default"
+                              : f.status === "CANCELLED"
+                                ? "secondary"
+                                : "outline"
+                          }
+                        >
+                          {FLEX_STATUS_LABELS[f.status] ?? f.status}
+                        </Badge>
                       </div>
                       <Progress value={pct} className="mt-3" />
                       <p className="mt-2 text-xs text-muted-foreground">
-                        {formatFcfa(f.paid_amount)} sur {formatFcfa(f.target_amount)}
+                        {formatFcfa(f.paid_amount)} sur {formatFcfa(f.target_amount)} ({pct}%)
                       </p>
-                      {f.status === "ACTIVE" && (
-                        <DepositForm
-                          flexAccountId={f.id}
-                          remaining={Number(f.target_amount) - Number(f.paid_amount)}
-                          onDone={() => flex.refetch()}
-                        />
+
+                      {f.status === "COMPLETED" && (
+                        <p className="mt-3 text-xs font-medium text-primary">
+                          🎉 Épargne complétée — votre commande a été créée automatiquement.
+                          Retrouvez-la dans « Mes commandes ».
+                        </p>
+                      )}
+
+                      {f.status === "ACTIVE" && pendingCancellation && (
+                        <p className="mt-3 rounded-lg bg-muted/60 p-2 text-xs text-muted-foreground">
+                          Demande d'annulation envoyée le{" "}
+                          {formatDate(pendingCancellation.created_at)}, en cours d'examen.
+                        </p>
+                      )}
+
+                      {f.status === "ACTIVE" && !pendingCancellation && (
+                        <>
+                          <DepositForm
+                            flexAccountId={f.id}
+                            remaining={Number(f.target_amount) - Number(f.paid_amount)}
+                            onDone={() => {
+                              flex.refetch();
+                              flexDeposits.refetch();
+                            }}
+                          />
+                          <div className="mt-3 flex items-center justify-end">
+                            <CancelFlexDialog
+                              flexAccountId={f.id}
+                              onDone={() => flexCancellations.refetch()}
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {f.status === "CANCELLED" && latestCancellation && (
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          {CANCELLATION_STATUS_LABELS[latestCancellation.status] ??
+                            latestCancellation.status}
+                          {" · "}
+                          Montant remboursable : {formatFcfa(latestCancellation.refundable_amount)}
+                        </p>
+                      )}
+
+                      {deposits.length > 0 && (
+                        <details className="mt-3 text-xs text-muted-foreground">
+                          <summary className="cursor-pointer select-none font-medium text-foreground">
+                            Historique des versements ({deposits.length})
+                          </summary>
+                          <ul className="mt-2 space-y-1.5">
+                            {deposits.map((d: any) => (
+                              <li key={d.id} className="flex items-center justify-between">
+                                <span>{formatDate(d.created_at)}</span>
+                                <span className="font-medium text-foreground">
+                                  {formatFcfa(d.amount)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
                       )}
                     </li>
                   );
@@ -352,6 +493,73 @@ function DepositForm({
         {busy ? "…" : "Verser"}
       </Button>
     </form>
+  );
+}
+
+function CancelFlexDialog({
+  flexAccountId,
+  onDone,
+}: {
+  flexAccountId: string;
+  onDone: () => void;
+}) {
+  const requestCancellation = useServerFn(requestFlexCancellationFn);
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function onConfirm() {
+    setBusy(true);
+    try {
+      await requestCancellation({ data: { flexAccountId, reason: reason.trim() || undefined } });
+      toast.success("Demande d'annulation envoyée. Nous revenons vers vous rapidement.");
+      setOpen(false);
+      setReason("");
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Une erreur est survenue.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive">
+          Demander l'annulation
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Annuler ce compte Flex ?</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Votre demande sera examinée par notre équipe. Le montant déjà versé vous sera remboursé ou
+          conservé en crédit, selon les conditions en vigueur.
+        </p>
+        <div className="space-y-2">
+          <label htmlFor="cancel-reason" className="text-sm font-medium">
+            Raison (optionnel)
+          </label>
+          <Textarea
+            id="cancel-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={3}
+            placeholder="Dites-nous pourquoi vous souhaitez annuler…"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Retour
+          </Button>
+          <Button variant="destructive" onClick={onConfirm} disabled={busy}>
+            {busy ? "Envoi…" : "Confirmer la demande"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

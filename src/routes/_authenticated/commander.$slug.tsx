@@ -67,7 +67,9 @@ function OrderPage() {
         });
         toast.success(`Commande ${res.reference} enregistrée.`);
       } else {
-        const { flexAccountId } = await openFlex({ data: { productId: product.id } });
+        const { flexAccountId } = await openFlex({
+          data: { productId: product.id, address, phone },
+        });
         const amount = Number(firstDeposit);
         if (amount > 0) {
           await deposit({
@@ -118,8 +120,18 @@ function OrderPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   {(
                     [
-                      { key: "CASH", label: "Cash", price: product.price_cash, hint: "Paiement immédiat" },
-                      { key: "FLEX", label: "Flex", price: product.price_flex, hint: "Épargne progressive" },
+                      {
+                        key: "CASH",
+                        label: "Cash",
+                        price: product.price_cash,
+                        hint: "Paiement immédiat",
+                      },
+                      {
+                        key: "FLEX",
+                        label: "Flex",
+                        price: product.price_flex,
+                        hint: "Épargne progressive",
+                      },
                     ] as const
                   ).map((f) => (
                     <button
@@ -127,7 +139,9 @@ function OrderPage() {
                       type="button"
                       onClick={() => setFormula(f.key)}
                       className={`rounded-2xl border p-4 text-left transition ${
-                        formula === f.key ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                        formula === f.key
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/40"
                       }`}
                     >
                       <p className="text-sm font-semibold">{f.label}</p>
@@ -138,33 +152,39 @@ function OrderPage() {
                 </div>
               </div>
 
-              {formula === "CASH" ? (
-                <div className="mt-6 grid gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Adresse de livraison</Label>
-                    <Input
-                      id="address"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      placeholder="Quartier, rue, ville"
-                      required
-                      minLength={5}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Téléphone</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+221 …"
-                      required
-                      minLength={6}
-                    />
-                  </div>
+              <div className="mt-6 grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="address">Adresse de livraison</Label>
+                  <Input
+                    id="address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Quartier, rue, ville"
+                    required
+                    minLength={5}
+                  />
                 </div>
-              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Téléphone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+221 …"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                {formula === "FLEX" && (
+                  <p className="text-xs text-muted-foreground">
+                    Cette adresse servira à la livraison automatique dès que votre épargne atteindra
+                    100 %.
+                  </p>
+                )}
+              </div>
+
+              {formula === "FLEX" && (
                 <div className="mt-6 space-y-2">
                   <Label htmlFor="firstDeposit">Premier versement (optionnel)</Label>
                   <Input
@@ -177,7 +197,8 @@ function OrderPage() {
                     placeholder="Ex. 50000"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Objectif Flex : {formatFcfa(product.price_flex)}. Vous versez à votre rythme.
+                    Objectif Flex : {formatFcfa(product.price_flex)}. Vous versez à votre rythme, à
+                    partir de 5 000 FCFA.
                   </p>
                 </div>
               )}
@@ -185,23 +206,31 @@ function OrderPage() {
               <div className="mt-6 space-y-3">
                 <Label>Moyen de paiement</Label>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {METHODS.filter((m) => formula === "CASH" || m.value !== "CASH_ON_DELIVERY").map((m) => (
-                    <button
-                      key={m.value}
-                      type="button"
-                      onClick={() => setMethod(m.value)}
-                      className={`rounded-xl border px-4 py-3 text-sm transition ${
-                        method === m.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
+                  {METHODS.filter((m) => formula === "CASH" || m.value !== "CASH_ON_DELIVERY").map(
+                    (m) => (
+                      <button
+                        key={m.value}
+                        type="button"
+                        onClick={() => setMethod(m.value)}
+                        className={`rounded-xl border px-4 py-3 text-sm transition ${
+                          method === m.value
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/40"
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
 
               <Button type="submit" variant="hero" className="mt-8 w-full" disabled={busy}>
-                {busy ? "Traitement…" : formula === "CASH" ? "Confirmer la commande" : "Ouvrir mon compte Flex"}
+                {busy
+                  ? "Traitement…"
+                  : formula === "CASH"
+                    ? "Confirmer la commande"
+                    : "Ouvrir mon compte Flex"}
               </Button>
             </form>
 

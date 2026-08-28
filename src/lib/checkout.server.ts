@@ -90,10 +90,7 @@ export async function placeCashOrder(input: {
   });
 
   if (payment.status === "SUCCESS") {
-    await supabaseAdmin
-      .from("orders")
-      .update({ status: "PAID" })
-      .eq("id", order.id);
+    await supabaseAdmin.from("orders").update({ status: "PAID" }).eq("id", order.id);
     await supabaseAdmin
       .from("products")
       .update({ stock_quantity: product.stock_quantity - 1 })
@@ -119,7 +116,12 @@ export async function placeCashOrder(input: {
   return { orderId: order.id, reference: order.reference, paymentStatus: payment.status };
 }
 
-export async function openFlexAccount(input: { userId: string; productId: string }) {
+export async function openFlexAccount(input: {
+  userId: string;
+  productId: string;
+  address: string;
+  phone: string;
+}) {
   const product = await loadProduct(input.productId);
   const { data: existing } = await supabaseAdmin
     .from("flex_accounts")
@@ -128,7 +130,14 @@ export async function openFlexAccount(input: { userId: string; productId: string
     .eq("product_id", product.id)
     .eq("status", "ACTIVE")
     .maybeSingle();
-  if (existing) return { flexAccountId: existing.id, created: false };
+  if (existing) {
+    // On garde l'adresse à jour au cas où le client la corrige.
+    await supabaseAdmin
+      .from("flex_accounts")
+      .update({ delivery_address: input.address, delivery_phone: input.phone })
+      .eq("id", existing.id);
+    return { flexAccountId: existing.id, created: false };
+  }
 
   const { data, error } = await supabaseAdmin
     .from("flex_accounts")
@@ -138,11 +147,99 @@ export async function openFlexAccount(input: { userId: string; productId: string
       target_amount: product.price_flex,
       paid_amount: 0,
       status: "ACTIVE",
+      delivery_address: input.address,
+      delivery_phone: input.phone,
     })
     .select("id")
     .single();
   if (error) throw new Error(error.message);
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: input.userId,
+    title: "Compte Flex ouvert",
+    body: `Votre compte Flex pour ${product.model} est actif. Objectif : ${product.price_flex} FCFA.`,
+    channel: "IN_APP",
+    audience: "USER",
+  });
+
   return { flexAccountId: data.id, created: true };
+}
+
+/**
+ * Une fois le compte Flex complété (déclenché par le trigger SQL
+ * recompute_flex_balance qui passe le statut à COMPLETED), on crée
+ * automatiquement la commande et la livraison correspondantes — le client
+ * ne doit rien refaire manuellement. Idempotent : si une commande existe
+ * déjà pour ce compte Flex, on ne la recrée pas.
+ */
+async function finalizeFlexAccountIfCompleted(flexAccountId: string) {
+  const { data: account, error } = await supabaseAdmin
+    .from("flex_accounts")
+    .select("id,user_id,product_id,target_amount,status,delivery_address,delivery_phone")
+    .eq("id", flexAccountId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!account || account.status !== "COMPLETED" || !account.product_id) return null;
+
+  const { data: existingOrder } = await supabaseAdmin
+    .from("orders")
+    .select("id,reference")
+    .eq("flex_account_id", account.id)
+    .maybeSingle();
+  if (existingOrder) return existingOrder;
+
+  const { data: product, error: productError } = await supabaseAdmin
+    .from("products")
+    .select("id,model,stock_quantity")
+    .eq("id", account.product_id)
+    .maybeSingle();
+  if (productError) throw new Error(productError.message);
+  if (!product) return null;
+
+  const { data: order, error: orderError } = await supabaseAdmin
+    .from("orders")
+    .insert({
+      reference: reference("CMD"),
+      user_id: account.user_id,
+      product_id: product.id,
+      flex_account_id: account.id,
+      formula: "FLEX",
+      amount: account.target_amount,
+      status: "PAID",
+    })
+    .select("id,reference")
+    .single();
+  if (orderError) throw new Error(orderError.message);
+
+  await supabaseAdmin.from("order_items").insert({
+    order_id: order.id,
+    product_id: product.id,
+    quantity: 1,
+    unit_price: account.target_amount,
+  });
+
+  await supabaseAdmin
+    .from("products")
+    .update({ stock_quantity: Math.max(0, product.stock_quantity - 1) })
+    .eq("id", product.id);
+
+  await supabaseAdmin.from("deliveries").insert({
+    order_id: order.id,
+    user_id: account.user_id,
+    address: account.delivery_address ?? "",
+    phone: account.delivery_phone ?? "",
+    status: "PENDING",
+  });
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: account.user_id,
+    title: "Épargne Flex complétée 🎉",
+    body: `Votre ${product.model} est entièrement payé. Commande ${order.reference} créée, livraison en préparation.`,
+    channel: "IN_APP",
+    audience: "USER",
+  });
+
+  return order;
 }
 
 export async function depositToFlex(input: {
@@ -177,7 +274,74 @@ export async function depositToFlex(input: {
   });
   if (depositError) throw new Error(depositError.message);
 
-  return { paid: input.amount, remaining: remaining - input.amount };
+  await supabaseAdmin.from("notifications").insert({
+    user_id: input.userId,
+    title: "Versement Flex confirmé",
+    body: `Dépôt de ${input.amount} FCFA reçu. Solde restant : ${Math.max(0, remaining - input.amount)} FCFA.`,
+    channel: "IN_APP",
+    audience: "USER",
+  });
+
+  const finalizedOrder = await finalizeFlexAccountIfCompleted(account.id);
+
+  return {
+    paid: input.amount,
+    remaining: Math.max(0, remaining - input.amount),
+    completed: !!finalizedOrder,
+    orderReference: finalizedOrder?.reference ?? null,
+  };
+}
+
+export async function requestFlexCancellation(input: {
+  userId: string;
+  flexAccountId: string;
+  reason?: string | undefined;
+}) {
+  const { data: account, error } = await supabaseAdmin
+    .from("flex_accounts")
+    .select("id,user_id,paid_amount,status")
+    .eq("id", input.flexAccountId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!account || account.user_id !== input.userId) throw new Error("Compte Flex introuvable.");
+  if (account.status !== "ACTIVE") {
+    throw new Error("Seul un compte Flex actif peut faire l'objet d'une demande d'annulation.");
+  }
+
+  const { data: pending } = await supabaseAdmin
+    .from("flex_cancellations")
+    .select("id")
+    .eq("flex_account_id", account.id)
+    .eq("status", "PENDING")
+    .maybeSingle();
+  if (pending) return { requestId: pending.id, created: false };
+
+  const paidAmount = Number(account.paid_amount);
+  const { data, error: insertError } = await supabaseAdmin
+    .from("flex_cancellations")
+    .insert({
+      flex_account_id: account.id,
+      user_id: input.userId,
+      reason: input.reason ?? null,
+      paid_amount: paidAmount,
+      refundable_amount: paidAmount,
+      fee_amount: 0,
+      keep_as_credit: false,
+      status: "PENDING",
+    })
+    .select("id")
+    .single();
+  if (insertError) throw new Error(insertError.message);
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: input.userId,
+    title: "Demande d'annulation Flex envoyée",
+    body: "Votre demande est en cours d'examen. Le montant remboursable vous sera confirmé.",
+    channel: "IN_APP",
+    audience: "USER",
+  });
+
+  return { requestId: data.id, created: true };
 }
 
 export async function joinTontineRequest(input: { userId: string; tontineId: string }) {

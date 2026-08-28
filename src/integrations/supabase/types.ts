@@ -101,6 +101,8 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          delivery_address: string | null
+          delivery_phone: string | null
           id: string
           is_demo: boolean
           paid_amount: number
@@ -113,6 +115,8 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          delivery_address?: string | null
+          delivery_phone?: string | null
           id?: string
           is_demo?: boolean
           paid_amount?: number
@@ -125,6 +129,8 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          delivery_address?: string | null
+          delivery_phone?: string | null
           id?: string
           is_demo?: boolean
           paid_amount?: number
@@ -415,6 +421,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          flex_account_id: string | null
           formula: Database["public"]["Enums"]["purchase_formula"]
           id: string
           is_demo: boolean
@@ -428,6 +435,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          flex_account_id?: string | null
           formula: Database["public"]["Enums"]["purchase_formula"]
           id?: string
           is_demo?: boolean
@@ -441,6 +449,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          flex_account_id?: string | null
           formula?: Database["public"]["Enums"]["purchase_formula"]
           id?: string
           is_demo?: boolean
