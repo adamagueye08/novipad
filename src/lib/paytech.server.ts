@@ -112,6 +112,29 @@ export type PaytechIpnFields = {
  * Vérifie qu'une notification IPN provient bien de PayTech.
  * Méthode HMAC-SHA256 en priorité (recommandée par PayTech), repli sur la
  * comparaison des clés API hachées en SHA256 si hmac_compute est absent.
+ *
+ * 📚 CONCEPT CYBERSÉCURITÉ — HMAC (Hash-based Message Authentication Code) :
+ * Le principe : PayTech et nous partageons un secret (PAYTECH_API_SECRET),
+ * connu de nous deux seulement. Quand PayTech nous envoie une notification,
+ * il calcule une "empreinte" (hash) du contenu de cette notification MÉLANGÉ
+ * avec ce secret. Nous recalculons la même empreinte de notre côté avec le
+ * même secret. Si les deux empreintes correspondent (`expected ===
+ * fields.hmac_compute`), on a la certitude que :
+ *   1. La notification vient bien de quelqu'un qui connaît le secret
+ *      (donc PayTech, personne d'autre ne le connaît)
+ *   2. Le contenu n'a pas été modifié en chemin (changer ne serait-ce
+ *      qu'un chiffre du montant changerait complètement l'empreinte)
+ * C'est le même principe que la signature électronique d'un document.
+ * On ne peut PAS "deviner" ce hash sans connaître le secret — même en
+ * connaissant l'algorithme exact (SHA-256 est public et documenté).
+ *
+ * 📚 CONCEPT CYBERSÉCURITÉ — pourquoi crypto.subtle et pas une lib externe :
+ * Web Crypto API (`crypto.subtle`) est disponible nativement dans
+ * l'environnement Cloudflare Workers (comme dans un navigateur) — pas besoin
+ * du module `crypto` de Node.js, qui n'existe pas sur les runtimes
+ * "edge"/serverless. C'est aussi une implémentation auditée et maintenue par
+ * les navigateurs eux-mêmes, donc plus sûre que de réimplémenter du hachage
+ * cryptographique à la main.
  */
 export async function verifyPaytechIpn(fields: PaytechIpnFields): Promise<boolean> {
   const { apiKey, apiSecret } = getPaytechConfig();

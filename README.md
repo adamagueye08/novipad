@@ -2,6 +2,8 @@
 
 Plateforme e-commerce premium dédiée à la vente d'iPad, avec trois formules de paiement flexibles : Cash, Flex (épargne progressive) et Tontine (achat collectif).
 
+📚 **[Documentation pédagogique complète](./docs/GUIDE.md)** — architecture, cybersécurité, DevOps, cloud, expliqués à travers le code réel du projet.
+
 ## Fonctionnalités
 
 ### Espace client

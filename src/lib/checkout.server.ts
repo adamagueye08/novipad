@@ -509,8 +509,19 @@ export async function payContribution(input: {
 
 /**
  * Appelée uniquement depuis le handler IPN (src/server.ts), après vérification
- * de la signature PayTech. Idempotente : un paiement déjà SUCCESS n'est jamais
- * retraité (PayTech peut renvoyer la même notification plusieurs fois).
+ * de la signature PayTech.
+ *
+ * 📚 CONCEPT DEVOPS/FIABILITÉ — Idempotence :
+ * Une opération est "idempotente" quand l'exécuter plusieurs fois produit
+ * exactement le même résultat que l'exécuter une seule fois. C'est essentiel
+ * pour un webhook, car le réseau n'est jamais fiable à 100% : PayTech peut
+ * renvoyer la MÊME notification plusieurs fois (timeout de notre côté, retry
+ * automatique chez eux, etc.). Sans idempotence, un client qui verse 10 000
+ * FCFA pourrait se voir crédité deux fois si la notification arrive en double.
+ * La ligne `if (payment.status !== "PENDING") return { alreadyProcessed:
+ * true }` juste en dessous est LA protection contre ce scénario : dès que le
+ * paiement est passé à SUCCESS une première fois, toute notification
+ * ultérieure pour la même référence est ignorée sans effet de bord.
  */
 export async function confirmPaytechPayment(input: {
   refCommand: string;
@@ -530,7 +541,9 @@ export async function confirmPaytechPayment(input: {
     return { handled: false };
   }
   if (payment.status !== "PENDING") {
-    // Déjà traité (notification dupliquée) — no-op.
+    // Déjà traité (notification dupliquée) — no-op. Voir le commentaire
+    // "Idempotence" ci-dessus : c'est la ligne qui protège contre le
+    // double-comptage d'un paiement notifié plusieurs fois par PayTech.
     return { handled: true, alreadyProcessed: true };
   }
 
