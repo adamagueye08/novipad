@@ -20,6 +20,7 @@ import { Route as CatalogueIndexRouteImport } from './routes/catalogue.index'
 import { Route as CatalogueSlugRouteImport } from './routes/catalogue.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminProduitsRouteImport } from './routes/_authenticated/admin/produits'
+import { Route as AuthenticatedAdminTontinesRouteImport } from './routes/_authenticated/admin/tontines'
 import { Route as AuthenticatedCommanderSlugRouteImport } from './routes/_authenticated/commander.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,6 +78,12 @@ const AuthenticatedAdminProduitsRoute =
     path: '/produits',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminTontinesRoute =
+  AuthenticatedAdminTontinesRouteImport.update({
+    id: '/tontines',
+    path: '/tontines',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedCommanderSlugRoute =
   AuthenticatedCommanderSlugRouteImport.update({
     id: '/commander/$slug',
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/commander/$slug': typeof AuthenticatedCommanderSlugRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/produits': typeof AuthenticatedAdminProduitsRoute
+  '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -108,6 +116,7 @@ export interface FileRoutesByTo {
   '/commander/$slug': typeof AuthenticatedCommanderSlugRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/produits': typeof AuthenticatedAdminProduitsRoute
+  '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/_authenticated/commander/$slug': typeof AuthenticatedCommanderSlugRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/produits': typeof AuthenticatedAdminProduitsRoute
+  '/_authenticated/admin/tontines': typeof AuthenticatedAdminTontinesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/commander/$slug'
     | '/admin/'
     | '/admin/produits'
+    | '/admin/tontines'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/commander/$slug'
     | '/admin'
     | '/admin/produits'
+    | '/admin/tontines'
   id:
     | '__root__'
     | '/'
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/_authenticated/commander/$slug'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/produits'
+    | '/_authenticated/admin/tontines'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -255,6 +268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProduitsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/tontines': {
+      id: '/_authenticated/admin/tontines'
+      path: '/tontines'
+      fullPath: '/admin/tontines'
+      preLoaderRoute: typeof AuthenticatedAdminTontinesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/commander/$slug': {
       id: '/_authenticated/commander/$slug'
       path: '/commander/$slug'
@@ -268,12 +288,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminProduitsRoute: typeof AuthenticatedAdminProduitsRoute
+  AuthenticatedAdminTontinesRoute: typeof AuthenticatedAdminTontinesRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
     AuthenticatedAdminProduitsRoute: AuthenticatedAdminProduitsRoute,
+    AuthenticatedAdminTontinesRoute: AuthenticatedAdminTontinesRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =

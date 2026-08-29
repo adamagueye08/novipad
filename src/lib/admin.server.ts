@@ -407,7 +407,7 @@ export async function listTontinesAdmin() {
   const { data, error } = await supabaseAdmin
     .from("tontines")
     .select(
-      "id,name,status,price,contribution_amount,frequency,duration_months,member_capacity,ipads_available,start_date,tontine_members(id,status,paid_amount,user_id,profiles:user_id(first_name,last_name,phone))",
+      "id,name,status,price,contribution_amount,frequency,duration_months,member_capacity,ipads_available,start_date,tontine_members(id,status,paid_amount,created_at,user_id,profiles:user_id(first_name,last_name,phone))",
     )
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
