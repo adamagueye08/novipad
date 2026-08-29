@@ -65,7 +65,14 @@ function OrderPage() {
         const res = await placeOrder({
           data: { productId: product.id, method, address, phone },
         });
-        toast.success(`Commande ${res.reference} enregistrée.`);
+        if (res.redirectUrl) {
+          // Wave / Orange Money / carte : on quitte le site pour la page de
+          // paiement sécurisée PayTech. La commande sera confirmée par
+          // webhook dès que le paiement aboutit.
+          window.location.href = res.redirectUrl;
+          return;
+        }
+        toast.success(`Commande ${res.reference} enregistrée. Vous payez à la livraison.`);
       } else {
         const { flexAccountId } = await openFlex({
           data: { productId: product.id, address, phone },
@@ -197,8 +204,8 @@ function OrderPage() {
                     placeholder="Ex. 50000"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Objectif Flex : {formatFcfa(product.price_flex)}. Vous versez à votre rythme, à
-                    partir de 5 000 FCFA.
+                    Objectif Flex : {formatFcfa(product.price_flex)}. Vous versez le montant que
+                    vous voulez, quand vous voulez.
                   </p>
                 </div>
               )}

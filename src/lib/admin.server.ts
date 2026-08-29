@@ -481,3 +481,119 @@ export async function listAuditLogs() {
   if (error) throw new Error(error.message);
   return data ?? [];
 }
+
+// ---------------------------------------------------------------------------
+// Flex : demandes d'annulation
+// ---------------------------------------------------------------------------
+
+export async function listFlexCancellations(status: "PENDING" | "ALL" = "PENDING") {
+  let query = supabaseAdmin
+    .from("flex_cancellations")
+    .select(
+      "id,status,reason,paid_amount,fee_amount,refundable_amount,keep_as_credit,created_at,decided_at,flex_account_id,user_id,flex_accounts(products(model)),profiles:user_id(first_name,last_name,phone)",
+    )
+    .order("created_at", { ascending: false });
+  if (status !== "ALL") query = query.eq("status", status);
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function decideFlexCancellation(input: {
+  actorId: string;
+  requestId: string;
+  decision: "APPROVED" | "REJECTED";
+}) {
+  const { data: request, error } = await supabaseAdmin
+    .from("flex_cancellations")
+    .select("id,status,user_id,flex_account_id,fee_amount,refundable_amount,keep_as_credit")
+    .eq("id", input.requestId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!request) throw new Error("Demande introuvable.");
+  if (request.status !== "PENDING") throw new Error("Cette demande a déjà été traitée.");
+
+  const { error: updateError } = await supabaseAdmin
+    .from("flex_cancellations")
+    .update({
+      status: input.decision,
+      decided_at: new Date().toISOString(),
+      decided_by: input.actorId,
+    })
+    .eq("id", input.requestId);
+  if (updateError) throw new Error(updateError.message);
+
+  if (input.decision === "APPROVED") {
+    await supabaseAdmin
+      .from("flex_accounts")
+      .update({ status: "CANCELLED" })
+      .eq("id", request.flex_account_id);
+  }
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: request.user_id,
+    title: input.decision === "APPROVED" ? "Annulation Flex approuvée" : "Annulation Flex refusée",
+    body:
+      input.decision === "APPROVED"
+        ? request.keep_as_credit
+          ? `Votre compte Flex est annulé. ${request.refundable_amount} FCFA sont conservés en crédit boutique.`
+          : `Votre compte Flex est annulé. Remboursement de ${request.refundable_amount} FCFA en cours de traitement.`
+        : "Votre demande d'annulation n'a pas été retenue. Votre compte Flex reste actif.",
+    channel: "IN_APP",
+    audience: "USER",
+  });
+
+  await logAudit({
+    actorId: input.actorId,
+    action: `flex_cancellation.${input.decision.toLowerCase()}`,
+    entityType: "flex_cancellations",
+    entityId: input.requestId,
+    oldValue: { status: "PENDING" },
+    newValue: { status: input.decision },
+  });
+
+  return { ok: true };
+}
+
+/** À utiliser une fois le virement Wave/Orange Money réellement envoyé au client. */
+export async function markFlexCancellationRefunded(input: { actorId: string; requestId: string }) {
+  const { data: request, error } = await supabaseAdmin
+    .from("flex_cancellations")
+    .select("id,status,user_id,refundable_amount,keep_as_credit")
+    .eq("id", input.requestId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!request) throw new Error("Demande introuvable.");
+  if (request.status !== "APPROVED") {
+    throw new Error("Seule une demande approuvée peut être marquée comme remboursée.");
+  }
+  if (request.keep_as_credit) {
+    throw new Error("Ce montant est conservé en crédit, pas de remboursement à effectuer.");
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from("flex_cancellations")
+    .update({ status: "REFUNDED" })
+    .eq("id", input.requestId);
+  if (updateError) throw new Error(updateError.message);
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: request.user_id,
+    title: "Remboursement effectué",
+    body: `${request.refundable_amount} FCFA vous ont été envoyés.`,
+    channel: "IN_APP",
+    audience: "USER",
+  });
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "flex_cancellation.refunded",
+    entityType: "flex_cancellations",
+    entityId: input.requestId,
+    oldValue: { status: "APPROVED" },
+    newValue: { status: "REFUNDED" },
+  });
+
+  return { ok: true };
+}

@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FormulesRouteImport } from './routes/formules'
+import { Route as PaiementSuccesRouteImport } from './routes/paiement.succes'
+import { Route as PaiementAnnuleRouteImport } from './routes/paiement.annule'
 import { Route as TontinesRouteImport } from './routes/tontines'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -21,6 +23,7 @@ import { Route as CatalogueSlugRouteImport } from './routes/catalogue.$slug'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminProduitsRouteImport } from './routes/_authenticated/admin/produits'
 import { Route as AuthenticatedAdminTontinesRouteImport } from './routes/_authenticated/admin/tontines'
+import { Route as AuthenticatedAdminFlexRouteImport } from './routes/_authenticated/admin/flex'
 import { Route as AuthenticatedCommanderSlugRouteImport } from './routes/_authenticated/commander.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -40,6 +43,16 @@ const AuthRoute = AuthRouteImport.update({
 const FormulesRoute = FormulesRouteImport.update({
   id: '/formules',
   path: '/formules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementSuccesRoute = PaiementSuccesRouteImport.update({
+  id: '/paiement/succes',
+  path: '/paiement/succes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementAnnuleRoute = PaiementAnnuleRouteImport.update({
+  id: '/paiement/annule',
+  path: '/paiement/annule',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TontinesRoute = TontinesRouteImport.update({
@@ -84,6 +97,11 @@ const AuthenticatedAdminTontinesRoute =
     path: '/tontines',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminFlexRoute = AuthenticatedAdminFlexRouteImport.update({
+  id: '/flex',
+  path: '/flex',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
 const AuthenticatedCommanderSlugRoute =
   AuthenticatedCommanderSlugRouteImport.update({
     id: '/commander/$slug',
@@ -95,6 +113,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/formules': typeof FormulesRoute
+  '/paiement/succes': typeof PaiementSuccesRoute
+  '/paiement/annule': typeof PaiementAnnuleRoute
   '/tontines': typeof TontinesRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -104,11 +124,14 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/produits': typeof AuthenticatedAdminProduitsRoute
   '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
+  '/admin/flex': typeof AuthenticatedAdminFlexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/formules': typeof FormulesRoute
+  '/paiement/succes': typeof PaiementSuccesRoute
+  '/paiement/annule': typeof PaiementAnnuleRoute
   '/tontines': typeof TontinesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
@@ -117,6 +140,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/produits': typeof AuthenticatedAdminProduitsRoute
   '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
+  '/admin/flex': typeof AuthenticatedAdminFlexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +148,8 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/formules': typeof FormulesRoute
+  '/paiement/succes': typeof PaiementSuccesRoute
+  '/paiement/annule': typeof PaiementAnnuleRoute
   '/tontines': typeof TontinesRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -140,6 +166,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/formules'
+    | '/paiement/succes'
+    | '/paiement/annule'
     | '/tontines'
     | '/admin'
     | '/dashboard'
@@ -149,11 +177,14 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/produits'
     | '/admin/tontines'
+    | '/admin/flex'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/formules'
+    | '/paiement/succes'
+    | '/paiement/annule'
     | '/tontines'
     | '/dashboard'
     | '/catalogue/$slug'
@@ -162,12 +193,15 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/produits'
     | '/admin/tontines'
+    | '/admin/flex'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/formules'
+    | '/paiement/succes'
+    | '/paiement/annule'
     | '/tontines'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
@@ -184,6 +218,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   FormulesRoute: typeof FormulesRoute
+  PaiementSuccesRoute: typeof PaiementSuccesRoute
+  PaiementAnnuleRoute: typeof PaiementAnnuleRoute
   TontinesRoute: typeof TontinesRoute
   CatalogueSlugRoute: typeof CatalogueSlugRoute
   CatalogueIndexRoute: typeof CatalogueIndexRoute
@@ -217,6 +253,20 @@ declare module '@tanstack/react-router' {
       path: '/formules'
       fullPath: '/formules'
       preLoaderRoute: typeof FormulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiement/succes': {
+      id: '/paiement/succes'
+      path: '/paiement/succes'
+      fullPath: '/paiement/succes'
+      preLoaderRoute: typeof PaiementSuccesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiement/annule': {
+      id: '/paiement/annule'
+      path: '/paiement/annule'
+      fullPath: '/paiement/annule'
+      preLoaderRoute: typeof PaiementAnnuleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tontines': {
@@ -275,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTontinesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/flex': {
+      id: '/_authenticated/admin/flex'
+      path: '/flex'
+      fullPath: '/admin/flex'
+      preLoaderRoute: typeof AuthenticatedAdminFlexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/commander/$slug': {
       id: '/_authenticated/commander/$slug'
       path: '/commander/$slug'
@@ -289,6 +346,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminProduitsRoute: typeof AuthenticatedAdminProduitsRoute
   AuthenticatedAdminTontinesRoute: typeof AuthenticatedAdminTontinesRoute
+  AuthenticatedAdminFlexRoute: typeof AuthenticatedAdminFlexRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -296,6 +354,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
     AuthenticatedAdminProduitsRoute: AuthenticatedAdminProduitsRoute,
     AuthenticatedAdminTontinesRoute: AuthenticatedAdminTontinesRoute,
+    AuthenticatedAdminFlexRoute: AuthenticatedAdminFlexRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
@@ -323,6 +382,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   FormulesRoute: FormulesRoute,
+  PaiementSuccesRoute: PaiementSuccesRoute,
+  PaiementAnnuleRoute: PaiementAnnuleRoute,
   TontinesRoute: TontinesRoute,
   CatalogueSlugRoute: CatalogueSlugRoute,
   CatalogueIndexRoute: CatalogueIndexRoute,

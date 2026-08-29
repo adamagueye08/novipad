@@ -4,7 +4,12 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { FormulaCards } from "@/components/site/FormulaCards";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const TITLE = "Cash, Flex ou Tontine — Choisir sa formule | iPad Rythme";
 const DESCRIPTION =
@@ -31,7 +36,7 @@ const STEPS = {
   ],
   Flex: [
     "Vous ouvrez un compte Flex sur l'iPad visé.",
-    "Vous déposez librement, à partir de 5 000 FCFA.",
+    "Vous déposez le montant de votre choix, quand vous voulez.",
     "Votre progression est recalculée après chaque paiement confirmé.",
     "À 100 %, la commande est créée et votre iPad est livré.",
   ],
@@ -48,10 +53,12 @@ function FormulasPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="container-page py-12 md:py-16">
-        <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Trois formules, un seul objectif</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
+          Trois formules, un seul objectif
+        </h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Le prix affiché dépend de la formule choisie. Tous les montants viennent directement de notre base de
-          données, sans surprise à la commande.
+          Le prix affiché dépend de la formule choisie. Tous les montants viennent directement de
+          notre base de données, sans surprise à la commande.
         </p>
 
         <FormulaCards className="mt-10" />
@@ -75,7 +82,9 @@ function FormulasPage() {
         </section>
 
         <section className="glass mt-16 rounded-4xl p-8 md:p-12">
-          <h2 className="font-display text-2xl font-semibold">Ce qui est garanti dans tous les cas</h2>
+          <h2 className="font-display text-2xl font-semibold">
+            Ce qui est garanti dans tous les cas
+          </h2>
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">
             {[
               "iPad importé des États-Unis, testé à l'arrivée",
@@ -105,22 +114,24 @@ function FormulasPage() {
             <AccordionItem value="1">
               <AccordionTrigger>Puis-je changer de formule en cours de route ?</AccordionTrigger>
               <AccordionContent>
-                Oui. Contactez l'équipe depuis votre espace client : le solde déjà versé est repris dans la nouvelle
-                formule selon les conditions en vigueur.
+                Oui. Contactez l'équipe depuis votre espace client : le solde déjà versé est repris
+                dans la nouvelle formule selon les conditions en vigueur.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="2">
               <AccordionTrigger>Que se passe-t-il si j'annule un compte Flex ?</AccordionTrigger>
               <AccordionContent>
-                Vous adressez une demande d'annulation. Après examen, le montant remboursable est calculé, frais
-                éventuels déduits, ou conservé en crédit sur votre compte.
+                Vous adressez une demande d'annulation. Après examen, le montant remboursable est
+                calculé, frais éventuels déduits, ou conservé en crédit sur votre compte.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="3">
-              <AccordionTrigger>Les cotisations de tontine sont-elles obligatoires ?</AccordionTrigger>
+              <AccordionTrigger>
+                Les cotisations de tontine sont-elles obligatoires ?
+              </AccordionTrigger>
               <AccordionContent>
-                Oui, elles suivent la fréquence du groupe. Les retards sont comptabilisés et peuvent affecter l'ordre
-                d'attribution des iPad.
+                Oui, elles suivent la fréquence du groupe. Les retards sont comptabilisés et peuvent
+                affecter l'ordre d'attribution des iPad.
               </AccordionContent>
             </AccordionItem>
           </Accordion>

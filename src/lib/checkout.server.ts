@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createPaytechPayment } from "@/lib/paytech.server";
 
 export const PAYMENT_METHODS = ["WAVE", "ORANGE_MONEY", "CARD", "CASH_ON_DELIVERY"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
@@ -82,21 +83,6 @@ export async function placeCashOrder(input: {
     unit_price: product.price_cash,
   });
 
-  const payment = await recordPayment({
-    userId: input.userId,
-    amount: product.price_cash,
-    method: input.method,
-    orderId: order.id,
-  });
-
-  if (payment.status === "SUCCESS") {
-    await supabaseAdmin.from("orders").update({ status: "PAID" }).eq("id", order.id);
-    await supabaseAdmin
-      .from("products")
-      .update({ stock_quantity: product.stock_quantity - 1 })
-      .eq("id", product.id);
-  }
-
   await supabaseAdmin.from("deliveries").insert({
     order_id: order.id,
     user_id: input.userId,
@@ -105,15 +91,64 @@ export async function placeCashOrder(input: {
     status: "PENDING",
   });
 
-  await supabaseAdmin.from("notifications").insert({
-    user_id: input.userId,
-    title: `Commande ${order.reference} enregistrée`,
-    body: `Votre ${product.model} est réservé. Statut du paiement: ${payment.status}.`,
-    channel: "IN_APP",
-    audience: "USER",
+  // Paiement à la livraison : pas de passerelle en ligne, la commande reste
+  // PENDING jusqu'à l'encaissement physique par le livreur.
+  if (input.method === "CASH_ON_DELIVERY") {
+    const payment = await recordPayment({
+      userId: input.userId,
+      amount: product.price_cash,
+      method: input.method,
+      orderId: order.id,
+    });
+
+    await supabaseAdmin.from("notifications").insert({
+      user_id: input.userId,
+      title: `Commande ${order.reference} enregistrée`,
+      body: `Votre ${product.model} est réservé. Vous payez à la livraison.`,
+      channel: "IN_APP",
+      audience: "USER",
+    });
+
+    return {
+      orderId: order.id,
+      reference: order.reference,
+      paymentStatus: payment.status,
+      redirectUrl: null as string | null,
+    };
+  }
+
+  // Wave / Orange Money / carte : on passe par PayTech. La commande reste
+  // PENDING jusqu'à la confirmation reçue via l'IPN (webhook serveur à
+  // serveur) — le paiement n'est jamais considéré réussi sur la seule foi
+  // de la redirection du navigateur.
+  const { data: paymentRow, error: paymentError } = await supabaseAdmin
+    .from("payments")
+    .insert({
+      user_id: input.userId,
+      amount: product.price_cash,
+      payment_method: input.method,
+      external_reference: reference("PAY"),
+      status: "PENDING",
+      order_id: order.id,
+    })
+    .select("id,external_reference")
+    .single();
+  if (paymentError) throw new Error(paymentError.message);
+
+  const { redirectUrl } = await createPaytechPayment({
+    refCommand: paymentRow.external_reference!,
+    amount: product.price_cash,
+    itemName: product.model,
+    commandName: `Commande ${order.reference} — ${product.model}`,
+    customField: { orderId: order.id, paymentId: paymentRow.id },
   });
 
-  return { orderId: order.id, reference: order.reference, paymentStatus: payment.status };
+  return {
+    orderId: order.id,
+    reference: order.reference,
+    paymentStatus: "PENDING" as const,
+    redirectUrl,
+  };
 }
 
 export async function openFlexAccount(input: {
@@ -259,12 +294,7 @@ export async function depositToFlex(input: {
 
   const remaining = Number(account.target_amount) - Number(account.paid_amount);
   if (input.amount > remaining) throw new Error("Le montant dépasse le solde restant à payer.");
-
-  const { minDeposit } = await getFlexSettings();
-  // Le minimum ne s'applique pas au tout dernier versement (solde restant < minimum).
-  if (input.amount < minDeposit && input.amount < remaining) {
-    throw new Error(`Le dépôt minimum est de ${minDeposit} FCFA.`);
-  }
+  if (input.amount <= 0) throw new Error("Le montant doit être supérieur à 0.");
 
   const payment = await recordPayment({
     userId: input.userId,
@@ -443,7 +473,10 @@ export async function payContribution(input: {
     throw new Error("Votre adhésion doit être validée avant de cotiser.");
   }
 
-  const amount = Number((member as any).tontines?.contribution_amount ?? 0);
+  const amount = Number(
+    (member as { tontines?: { contribution_amount?: number } | null }).tontines
+      ?.contribution_amount ?? 0,
+  );
   if (!amount) throw new Error("Montant de cotisation indisponible.");
 
   const payment = await recordPayment({
@@ -472,4 +505,97 @@ export async function payContribution(input: {
     .eq("id", member.id);
 
   return { amount };
+}
+
+// ---------------------------------------------------------------------------
+// PayTech : confirmation d'un paiement via IPN (webhook serveur à serveur)
+// ---------------------------------------------------------------------------
+
+/**
+ * Appelée uniquement depuis le handler IPN (src/server.ts), après vérification
+ * de la signature PayTech. Idempotente : un paiement déjà SUCCESS n'est jamais
+ * retraité (PayTech peut renvoyer la même notification plusieurs fois).
+ */
+export async function confirmPaytechPayment(input: {
+  refCommand: string;
+  succeeded: boolean;
+  paymentMethod?: string | undefined;
+}) {
+  const { data: payment, error } = await supabaseAdmin
+    .from("payments")
+    .select("id,status,amount,order_id,user_id")
+    .eq("external_reference", input.refCommand)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!payment) {
+    // Référence inconnue : on répond quand même 200 à PayTech (rien à
+    // retraiter côté nous), mais on log pour investigation.
+    console.error(`PayTech IPN: paiement introuvable pour ref_command=${input.refCommand}`);
+    return { handled: false };
+  }
+  if (payment.status !== "PENDING") {
+    // Déjà traité (notification dupliquée) — no-op.
+    return { handled: true, alreadyProcessed: true };
+  }
+
+  const newStatus = input.succeeded ? "SUCCESS" : "FAILED";
+  const updatePayload: {
+    status: "SUCCESS" | "FAILED";
+    confirmed_at: string | null;
+    payment_method?: string;
+  } = {
+    status: newStatus,
+    confirmed_at: input.succeeded ? new Date().toISOString() : null,
+  };
+  if (input.paymentMethod) updatePayload.payment_method = input.paymentMethod;
+
+  await supabaseAdmin.from("payments").update(updatePayload).eq("id", payment.id);
+
+  if (!input.succeeded || !payment.order_id) {
+    if (!input.succeeded && payment.order_id) {
+      await supabaseAdmin.from("orders").update({ status: "CANCELLED" }).eq("id", payment.order_id);
+      await supabaseAdmin.from("notifications").insert({
+        user_id: payment.user_id,
+        title: "Paiement échoué",
+        body: "Votre paiement n'a pas pu être confirmé. Vous pouvez réessayer depuis votre espace.",
+        channel: "IN_APP",
+        audience: "USER",
+      });
+    }
+    return { handled: true };
+  }
+
+  // Commande Cash payée avec succès : on la marque payée et on décrémente le stock.
+  const { data: order } = await supabaseAdmin
+    .from("orders")
+    .select("id,reference,status,product_id")
+    .eq("id", payment.order_id)
+    .maybeSingle();
+  if (!order || order.status !== "PENDING") return { handled: true };
+
+  await supabaseAdmin.from("orders").update({ status: "PAID" }).eq("id", order.id);
+
+  if (order.product_id) {
+    const { data: product } = await supabaseAdmin
+      .from("products")
+      .select("id,model,stock_quantity")
+      .eq("id", order.product_id)
+      .maybeSingle();
+    if (product) {
+      await supabaseAdmin
+        .from("products")
+        .update({ stock_quantity: Math.max(0, product.stock_quantity - 1) })
+        .eq("id", product.id);
+    }
+  }
+
+  await supabaseAdmin.from("notifications").insert({
+    user_id: payment.user_id,
+    title: `Paiement confirmé — commande ${order.reference}`,
+    body: "Votre paiement a été reçu. Votre commande est en préparation.",
+    channel: "IN_APP",
+    audience: "USER",
+  });
+
+  return { handled: true };
 }

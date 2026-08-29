@@ -1,7 +1,15 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { BarChart3, Boxes, CreditCard, ShieldCheck, ShoppingBag, Users } from "lucide-react";
+import {
+  BarChart3,
+  Boxes,
+  CreditCard,
+  ShieldCheck,
+  ShoppingBag,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { myAccessFn } from "@/lib/admin.functions";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
@@ -30,6 +38,7 @@ const NAV = [
   { to: "/admin/produits", label: "Produits & stock", icon: Boxes, ready: true },
   { to: "/admin/commandes", label: "Commandes", icon: ShoppingBag, ready: false },
   { to: "/admin/paiements", label: "Paiements", icon: CreditCard, ready: false },
+  { to: "/admin/flex", label: "Flex — Annulations", icon: Wallet, ready: true },
   { to: "/admin/tontines", label: "Tontines", icon: ShieldCheck, ready: true },
   { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, ready: false },
 ] as const;

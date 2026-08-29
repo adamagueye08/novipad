@@ -233,3 +233,39 @@ export const adminUpdateTontineFn = createServerFn({ method: "POST" })
     await ensureStaff(context.supabase, context.userId);
     return updateTontineStatus({ ...data, actorId: context.userId });
   });
+
+export const adminFlexCancellationsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ status: z.enum(["PENDING", "ALL"]).default("PENDING") }).parse(data ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, listFlexCancellations } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return listFlexCancellations(data.status);
+  });
+
+export const adminDecideFlexCancellationFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        requestId: z.string().uuid(),
+        decision: z.enum(["APPROVED", "REJECTED"]),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, decideFlexCancellation } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return decideFlexCancellation({ ...data, actorId: context.userId });
+  });
+
+export const adminMarkFlexCancellationRefundedFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ requestId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, markFlexCancellationRefunded } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return markFlexCancellationRefunded({ ...data, actorId: context.userId });
+  });
