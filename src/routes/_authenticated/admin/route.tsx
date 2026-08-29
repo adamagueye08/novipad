@@ -36,8 +36,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const NAV = [
   { to: "/admin", label: "Vue d'ensemble", icon: BarChart3, ready: true },
   { to: "/admin/produits", label: "Produits & stock", icon: Boxes, ready: true },
-  { to: "/admin/commandes", label: "Commandes", icon: ShoppingBag, ready: false },
-  { to: "/admin/paiements", label: "Paiements", icon: CreditCard, ready: false },
+  { to: "/admin/commandes", label: "Commandes", icon: ShoppingBag, ready: true },
+  { to: "/admin/paiements", label: "Paiements", icon: CreditCard, ready: true },
   { to: "/admin/flex", label: "Flex — Annulations", icon: Wallet, ready: true },
   { to: "/admin/tontines", label: "Tontines", icon: ShieldCheck, ready: true },
   { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, ready: false },

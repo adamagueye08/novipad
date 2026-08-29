@@ -24,6 +24,8 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminProduitsRouteImport } from './routes/_authenticated/admin/produits'
 import { Route as AuthenticatedAdminTontinesRouteImport } from './routes/_authenticated/admin/tontines'
 import { Route as AuthenticatedAdminFlexRouteImport } from './routes/_authenticated/admin/flex'
+import { Route as AuthenticatedAdminCommandesRouteImport } from './routes/_authenticated/admin/commandes'
+import { Route as AuthenticatedAdminPaiementsRouteImport } from './routes/_authenticated/admin/paiements'
 import { Route as AuthenticatedCommanderSlugRouteImport } from './routes/_authenticated/commander.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -102,6 +104,18 @@ const AuthenticatedAdminFlexRoute = AuthenticatedAdminFlexRouteImport.update({
   path: '/flex',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
+const AuthenticatedAdminCommandesRoute =
+  AuthenticatedAdminCommandesRouteImport.update({
+    id: '/commandes',
+    path: '/commandes',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminPaiementsRoute =
+  AuthenticatedAdminPaiementsRouteImport.update({
+    id: '/paiements',
+    path: '/paiements',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedCommanderSlugRoute =
   AuthenticatedCommanderSlugRouteImport.update({
     id: '/commander/$slug',
@@ -125,6 +139,8 @@ export interface FileRoutesByFullPath {
   '/admin/produits': typeof AuthenticatedAdminProduitsRoute
   '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
   '/admin/flex': typeof AuthenticatedAdminFlexRoute
+  '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
+  '/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -141,6 +157,8 @@ export interface FileRoutesByTo {
   '/admin/produits': typeof AuthenticatedAdminProduitsRoute
   '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
   '/admin/flex': typeof AuthenticatedAdminFlexRoute
+  '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
+  '/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -178,6 +196,8 @@ export interface FileRouteTypes {
     | '/admin/produits'
     | '/admin/tontines'
     | '/admin/flex'
+    | '/admin/commandes'
+    | '/admin/paiements'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,6 +214,8 @@ export interface FileRouteTypes {
     | '/admin/produits'
     | '/admin/tontines'
     | '/admin/flex'
+    | '/admin/commandes'
+    | '/admin/paiements'
   id:
     | '__root__'
     | '/'
@@ -332,6 +354,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFlexRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/commandes': {
+      id: '/_authenticated/admin/commandes'
+      path: '/commandes'
+      fullPath: '/admin/commandes'
+      preLoaderRoute: typeof AuthenticatedAdminCommandesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/paiements': {
+      id: '/_authenticated/admin/paiements'
+      path: '/paiements'
+      fullPath: '/admin/paiements'
+      preLoaderRoute: typeof AuthenticatedAdminPaiementsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/commander/$slug': {
       id: '/_authenticated/commander/$slug'
       path: '/commander/$slug'
@@ -347,6 +383,8 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminProduitsRoute: typeof AuthenticatedAdminProduitsRoute
   AuthenticatedAdminTontinesRoute: typeof AuthenticatedAdminTontinesRoute
   AuthenticatedAdminFlexRoute: typeof AuthenticatedAdminFlexRoute
+  AuthenticatedAdminCommandesRoute: typeof AuthenticatedAdminCommandesRoute
+  AuthenticatedAdminPaiementsRoute: typeof AuthenticatedAdminPaiementsRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -355,6 +393,8 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminProduitsRoute: AuthenticatedAdminProduitsRoute,
     AuthenticatedAdminTontinesRoute: AuthenticatedAdminTontinesRoute,
     AuthenticatedAdminFlexRoute: AuthenticatedAdminFlexRoute,
+    AuthenticatedAdminCommandesRoute: AuthenticatedAdminCommandesRoute,
+    AuthenticatedAdminPaiementsRoute: AuthenticatedAdminPaiementsRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
