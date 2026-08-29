@@ -40,7 +40,7 @@ const NAV = [
   { to: "/admin/paiements", label: "Paiements", icon: CreditCard, ready: true },
   { to: "/admin/flex", label: "Flex — Annulations", icon: Wallet, ready: true },
   { to: "/admin/tontines", label: "Tontines", icon: ShieldCheck, ready: true },
-  { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, ready: false },
+  { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, ready: true },
 ] as const;
 
 function AdminLayout() {
