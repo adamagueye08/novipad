@@ -285,7 +285,7 @@ export async function depositToFlex(input: {
 }) {
   const { data: account, error } = await supabaseAdmin
     .from("flex_accounts")
-    .select("id,user_id,target_amount,paid_amount,status")
+    .select("id,user_id,target_amount,paid_amount,status,products(model)")
     .eq("id", input.flexAccountId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -296,36 +296,35 @@ export async function depositToFlex(input: {
   if (input.amount > remaining) throw new Error("Le montant dépasse le solde restant à payer.");
   if (input.amount <= 0) throw new Error("Le montant doit être supérieur à 0.");
 
-  const payment = await recordPayment({
-    userId: input.userId,
+  // Le dépôt n'est enregistré (flex_deposits) qu'une fois le paiement confirmé
+  // par le webhook PayTech — jamais avant, pour ne jamais faire progresser
+  // l'épargne d'un client sur la seule foi d'une redirection navigateur.
+  const { data: paymentRow, error: paymentError } = await supabaseAdmin
+    .from("payments")
+    .insert({
+      user_id: input.userId,
+      amount: input.amount,
+      payment_method: input.method,
+      external_reference: reference("PAY"),
+      status: "PENDING",
+      flex_account_id: account.id,
+    })
+    .select("id,external_reference")
+    .single();
+  if (paymentError) throw new Error(paymentError.message);
+
+  const productModel =
+    (account as { products?: { model?: string } | null }).products?.model ?? "iPad";
+
+  const { redirectUrl } = await createPaytechPayment({
+    refCommand: paymentRow.external_reference!,
     amount: input.amount,
-    method: input.method === "CASH_ON_DELIVERY" ? "WAVE" : input.method,
-    flexAccountId: account.id,
+    itemName: `Dépôt Flex — ${productModel}`,
+    commandName: `Versement Flex de ${input.amount} FCFA`,
+    customField: { flexAccountId: account.id, paymentId: paymentRow.id },
   });
 
-  const { error: depositError } = await supabaseAdmin.from("flex_deposits").insert({
-    flex_account_id: account.id,
-    payment_id: payment.id,
-    amount: input.amount,
-  });
-  if (depositError) throw new Error(depositError.message);
-
-  await supabaseAdmin.from("notifications").insert({
-    user_id: input.userId,
-    title: "Versement Flex confirmé",
-    body: `Dépôt de ${input.amount} FCFA reçu. Solde restant : ${Math.max(0, remaining - input.amount)} FCFA.`,
-    channel: "IN_APP",
-    audience: "USER",
-  });
-
-  const finalizedOrder = await finalizeFlexAccountIfCompleted(account.id);
-
-  return {
-    paid: input.amount,
-    remaining: Math.max(0, remaining - input.amount),
-    completed: !!finalizedOrder,
-    orderReference: finalizedOrder?.reference ?? null,
-  };
+  return { redirectUrl };
 }
 
 export async function getFlexSettings() {
@@ -473,38 +472,35 @@ export async function payContribution(input: {
     throw new Error("Votre adhésion doit être validée avant de cotiser.");
   }
 
-  const amount = Number(
-    (member as { tontines?: { contribution_amount?: number } | null }).tontines
-      ?.contribution_amount ?? 0,
-  );
+  const tontine = (member as { tontines?: { contribution_amount?: number; name?: string } | null })
+    .tontines;
+  const amount = Number(tontine?.contribution_amount ?? 0);
   if (!amount) throw new Error("Montant de cotisation indisponible.");
 
-  const payment = await recordPayment({
-    userId: input.userId,
+  const { data: paymentRow, error: paymentError } = await supabaseAdmin
+    .from("payments")
+    .insert({
+      user_id: input.userId,
+      amount,
+      payment_method: input.method,
+      external_reference: reference("PAY"),
+      status: "PENDING",
+      tontine_id: member.tontine_id,
+      tontine_member_id: member.id,
+    })
+    .select("id,external_reference")
+    .single();
+  if (paymentError) throw new Error(paymentError.message);
+
+  const { redirectUrl } = await createPaytechPayment({
+    refCommand: paymentRow.external_reference!,
     amount,
-    method: input.method === "CASH_ON_DELIVERY" ? "WAVE" : input.method,
-    tontineId: member.tontine_id,
-    tontineMemberId: member.id,
+    itemName: `Cotisation — ${tontine?.name ?? "Tontine"}`,
+    commandName: `Cotisation tontine ${tontine?.name ?? ""}`.trim(),
+    customField: { tontineMemberId: member.id, paymentId: paymentRow.id },
   });
 
-  const today = new Date().toISOString().slice(0, 10);
-  await supabaseAdmin.from("tontine_contributions").insert({
-    tontine_id: member.tontine_id,
-    member_id: member.id,
-    amount,
-    due_date: today,
-    status: "PAID",
-    payment_id: payment.id,
-    reference: payment.external_reference,
-    paid_at: new Date().toISOString(),
-  });
-
-  await supabaseAdmin
-    .from("tontine_members")
-    .update({ paid_amount: Number(member.paid_amount) + amount, status: "ACTIVE" })
-    .eq("id", member.id);
-
-  return { amount };
+  return { redirectUrl };
 }
 
 // ---------------------------------------------------------------------------
@@ -523,7 +519,7 @@ export async function confirmPaytechPayment(input: {
 }) {
   const { data: payment, error } = await supabaseAdmin
     .from("payments")
-    .select("id,status,amount,order_id,user_id")
+    .select("id,status,amount,order_id,flex_account_id,tontine_id,tontine_member_id,user_id")
     .eq("external_reference", input.refCommand)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -551,51 +547,142 @@ export async function confirmPaytechPayment(input: {
 
   await supabaseAdmin.from("payments").update(updatePayload).eq("id", payment.id);
 
-  if (!input.succeeded || !payment.order_id) {
-    if (!input.succeeded && payment.order_id) {
+  if (!input.succeeded) {
+    if (payment.order_id) {
       await supabaseAdmin.from("orders").update({ status: "CANCELLED" }).eq("id", payment.order_id);
-      await supabaseAdmin.from("notifications").insert({
-        user_id: payment.user_id,
-        title: "Paiement échoué",
-        body: "Votre paiement n'a pas pu être confirmé. Vous pouvez réessayer depuis votre espace.",
-        channel: "IN_APP",
-        audience: "USER",
-      });
     }
+    await supabaseAdmin.from("notifications").insert({
+      user_id: payment.user_id,
+      title: "Paiement échoué",
+      body: "Votre paiement n'a pas pu être confirmé. Vous pouvez réessayer depuis votre espace.",
+      channel: "IN_APP",
+      audience: "USER",
+    });
     return { handled: true };
   }
 
-  // Commande Cash payée avec succès : on la marque payée et on décrémente le stock.
-  const { data: order } = await supabaseAdmin
-    .from("orders")
-    .select("id,reference,status,product_id")
-    .eq("id", payment.order_id)
-    .maybeSingle();
-  if (!order || order.status !== "PENDING") return { handled: true };
-
-  await supabaseAdmin.from("orders").update({ status: "PAID" }).eq("id", order.id);
-
-  if (order.product_id) {
-    const { data: product } = await supabaseAdmin
-      .from("products")
-      .select("id,model,stock_quantity")
-      .eq("id", order.product_id)
+  // --- Commande Cash payée avec succès ---
+  if (payment.order_id) {
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id,reference,status,product_id")
+      .eq("id", payment.order_id)
       .maybeSingle();
-    if (product) {
-      await supabaseAdmin
+    if (!order || order.status !== "PENDING") return { handled: true };
+
+    await supabaseAdmin.from("orders").update({ status: "PAID" }).eq("id", order.id);
+
+    if (order.product_id) {
+      const { data: product } = await supabaseAdmin
         .from("products")
-        .update({ stock_quantity: Math.max(0, product.stock_quantity - 1) })
-        .eq("id", product.id);
+        .select("id,model,stock_quantity")
+        .eq("id", order.product_id)
+        .maybeSingle();
+      if (product) {
+        await supabaseAdmin
+          .from("products")
+          .update({ stock_quantity: Math.max(0, product.stock_quantity - 1) })
+          .eq("id", product.id);
+      }
     }
+
+    await supabaseAdmin.from("notifications").insert({
+      user_id: payment.user_id,
+      title: `Paiement confirmé — commande ${order.reference}`,
+      body: "Votre paiement a été reçu. Votre commande est en préparation.",
+      channel: "IN_APP",
+      audience: "USER",
+    });
+    return { handled: true };
   }
 
-  await supabaseAdmin.from("notifications").insert({
-    user_id: payment.user_id,
-    title: `Paiement confirmé — commande ${order.reference}`,
-    body: "Votre paiement a été reçu. Votre commande est en préparation.",
-    channel: "IN_APP",
-    audience: "USER",
-  });
+  // --- Versement Flex payé avec succès ---
+  if (payment.flex_account_id) {
+    const { data: account } = await supabaseAdmin
+      .from("flex_accounts")
+      .select("id,target_amount,paid_amount")
+      .eq("id", payment.flex_account_id)
+      .maybeSingle();
+    if (!account) return { handled: true };
+
+    // Idempotence : si ce paiement a déjà généré un dépôt (notification
+    // dupliquée arrivée après coup), on ne double-compte pas.
+    const { data: existingDeposit } = await supabaseAdmin
+      .from("flex_deposits")
+      .select("id")
+      .eq("payment_id", payment.id)
+      .maybeSingle();
+    if (!existingDeposit) {
+      await supabaseAdmin.from("flex_deposits").insert({
+        flex_account_id: account.id,
+        payment_id: payment.id,
+        amount: payment.amount,
+      });
+    }
+
+    const remaining = Math.max(
+      0,
+      Number(account.target_amount) - Number(account.paid_amount) - Number(payment.amount),
+    );
+    await supabaseAdmin.from("notifications").insert({
+      user_id: payment.user_id,
+      title: "Versement Flex confirmé",
+      body: `Dépôt de ${payment.amount} FCFA reçu. Solde restant : ${remaining} FCFA.`,
+      channel: "IN_APP",
+      audience: "USER",
+    });
+
+    await finalizeFlexAccountIfCompleted(account.id);
+    return { handled: true };
+  }
+
+  // --- Cotisation Tontine payée avec succès ---
+  if (payment.tontine_member_id && payment.tontine_id) {
+    const tontineId = payment.tontine_id;
+    const { data: member } = await supabaseAdmin
+      .from("tontine_members")
+      .select("id,paid_amount,tontines(name)")
+      .eq("id", payment.tontine_member_id)
+      .maybeSingle();
+    if (!member) return { handled: true };
+
+    const { data: existingContribution } = await supabaseAdmin
+      .from("tontine_contributions")
+      .select("id")
+      .eq("payment_id", payment.id)
+      .maybeSingle();
+    if (!existingContribution) {
+      const today = new Date().toISOString().slice(0, 10);
+      await supabaseAdmin.from("tontine_contributions").insert({
+        tontine_id: tontineId,
+        member_id: member.id,
+        amount: payment.amount,
+        due_date: today,
+        status: "PAID",
+        payment_id: payment.id,
+        reference: input.refCommand,
+        paid_at: new Date().toISOString(),
+      });
+      await supabaseAdmin
+        .from("tontine_members")
+        .update({
+          paid_amount: Number(member.paid_amount) + Number(payment.amount),
+          status: "ACTIVE",
+        })
+        .eq("id", member.id);
+    }
+
+    const tontineName =
+      (member as { tontines?: { name?: string } | null }).tontines?.name ?? "la tontine";
+    await supabaseAdmin.from("notifications").insert({
+      user_id: payment.user_id,
+      title: "Cotisation confirmée",
+      body: `Votre cotisation de ${payment.amount} FCFA pour « ${tontineName} » est enregistrée.`,
+      channel: "IN_APP",
+      audience: "USER",
+    });
+    return { handled: true };
+  }
 
   return { handled: true };
 }

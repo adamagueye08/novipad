@@ -469,13 +469,10 @@ function DepositForm({
     if (!value || value <= 0) return;
     setBusy(true);
     try {
-      await deposit({ data: { flexAccountId, amount: value, method: "WAVE" } });
-      toast.success("Versement enregistré.");
-      setAmount("");
-      onDone();
+      const res = await deposit({ data: { flexAccountId, amount: value, method: "WAVE" } });
+      window.location.href = res.redirectUrl;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Une erreur est survenue.");
-    } finally {
       setBusy(false);
     }
   }
@@ -642,11 +639,9 @@ function ContributionButton({ memberId, onDone }: { memberId: string; onDone: ()
     setBusy(true);
     try {
       const res = await pay({ data: { memberId, method: "WAVE" } });
-      toast.success(`Cotisation de ${formatFcfa(res.amount)} enregistrée.`);
-      onDone();
+      window.location.href = res.redirectUrl;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Une erreur est survenue.");
-    } finally {
       setBusy(false);
     }
   }

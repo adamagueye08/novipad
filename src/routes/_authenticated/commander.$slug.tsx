@@ -79,13 +79,15 @@ function OrderPage() {
         });
         const amount = Number(firstDeposit);
         if (amount > 0) {
-          await deposit({
+          const res = await deposit({
             data: {
               flexAccountId,
               amount,
               method: method === "CASH_ON_DELIVERY" ? "WAVE" : method,
             },
           });
+          window.location.href = res.redirectUrl;
+          return;
         }
         toast.success("Compte Flex ouvert. Suivez votre épargne depuis votre espace.");
       }
