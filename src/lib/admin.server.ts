@@ -632,3 +632,88 @@ export async function updateSetting(input: { actorId: string; key: string; value
 
   return { ok: true };
 }
+
+// ---------------------------------------------------------------------------
+// Stories (vitrine boutique, publiées par le staff uniquement)
+// ---------------------------------------------------------------------------
+
+export async function listStoriesAdmin() {
+  const { data, error } = await supabaseAdmin
+    .from("stories")
+    .select(
+      "id,title,media_url,media_type,product_id,is_active,created_at,expires_at,products(model)",
+    )
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function createStory(input: {
+  actorId: string;
+  title?: string | null | undefined;
+  mediaUrl: string;
+  mediaType: "IMAGE" | "VIDEO";
+  productId?: string | null | undefined;
+  durationHours: number;
+}) {
+  const expiresAt = new Date(Date.now() + input.durationHours * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabaseAdmin
+    .from("stories")
+    .insert({
+      title: input.title ?? null,
+      media_url: input.mediaUrl,
+      media_type: input.mediaType,
+      product_id: input.productId ?? null,
+      created_by: input.actorId,
+      expires_at: expiresAt,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "story.create",
+    entityType: "stories",
+    entityId: data.id,
+    newValue: { ...input, expiresAt },
+  });
+
+  return { id: data.id };
+}
+
+export async function setStoryActive(input: {
+  actorId: string;
+  storyId: string;
+  isActive: boolean;
+}) {
+  const { error } = await supabaseAdmin
+    .from("stories")
+    .update({ is_active: input.isActive })
+    .eq("id", input.storyId);
+  if (error) throw new Error(error.message);
+
+  await logAudit({
+    actorId: input.actorId,
+    action: input.isActive ? "story.show" : "story.hide",
+    entityType: "stories",
+    entityId: input.storyId,
+  });
+
+  return { ok: true };
+}
+
+export async function deleteStory(input: { actorId: string; storyId: string }) {
+  const { error } = await supabaseAdmin.from("stories").delete().eq("id", input.storyId);
+  if (error) throw new Error(error.message);
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "story.delete",
+    entityType: "stories",
+    entityId: input.storyId,
+  });
+
+  return { ok: true };
+}

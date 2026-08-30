@@ -111,3 +111,29 @@ export function formulaPrices(products: Product[]) {
     flex: cheapest.price_flex,
   };
 }
+
+export type Story = {
+  id: string;
+  title: string | null;
+  media_url: string;
+  media_type: "IMAGE" | "VIDEO";
+  product_id: string | null;
+  expires_at: string;
+  products: { slug: string } | null;
+};
+
+export const storiesQuery = () =>
+  queryOptions({
+    queryKey: ["stories"],
+    queryFn: async (): Promise<Story[]> => {
+      // La base filtre déjà is_active + expires_at > now() (voir policy
+      // "stories_public_read"), donc ce qui revient ici est toujours
+      // affichable tel quel.
+      const { data, error } = await supabase
+        .from("stories")
+        .select("id,title,media_url,media_type,product_id,expires_at,products(slug)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Story[];
+    },
+  });

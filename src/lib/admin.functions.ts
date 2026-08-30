@@ -293,3 +293,53 @@ export const adminUpdateSettingFn = createServerFn({ method: "POST" })
     await ensureStaff(context.supabase, context.userId);
     return updateSetting({ ...data, actorId: context.userId });
   });
+
+export const adminStoriesFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { ensureStaff, listStoriesAdmin } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return listStoriesAdmin();
+  });
+
+export const adminCreateStoryFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        title: z.string().max(100).optional(),
+        mediaUrl: z.string().url(),
+        mediaType: z.enum(["IMAGE", "VIDEO"]),
+        productId: z.string().uuid().optional(),
+        durationHours: z
+          .number()
+          .positive()
+          .max(24 * 30), // 30 jours max
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, createStory } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return createStory({ ...data, actorId: context.userId });
+  });
+
+export const adminSetStoryActiveFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ storyId: z.string().uuid(), isActive: z.boolean() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, setStoryActive } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return setStoryActive({ ...data, actorId: context.userId });
+  });
+
+export const adminDeleteStoryFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ storyId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, deleteStory } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return deleteStory({ ...data, actorId: context.userId });
+  });

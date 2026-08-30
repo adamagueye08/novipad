@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   BarChart3,
   Boxes,
+  Clapperboard,
   CreditCard,
   Settings,
   ShieldCheck,
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 const NAV = [
   { to: "/admin", label: "Vue d'ensemble", icon: BarChart3, ready: true },
   { to: "/admin/produits", label: "Produits & stock", icon: Boxes, ready: true },
+  { to: "/admin/stories", label: "Stories", icon: Clapperboard, ready: true },
   { to: "/admin/commandes", label: "Commandes", icon: ShoppingBag, ready: true },
   { to: "/admin/paiements", label: "Paiements", icon: CreditCard, ready: true },
   { to: "/admin/flex", label: "Flex — Annulations", icon: Wallet, ready: true },

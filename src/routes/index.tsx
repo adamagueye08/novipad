@@ -17,8 +17,14 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ProductCard } from "@/components/site/ProductCard";
 import { FormulaCards } from "@/components/site/FormulaCards";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { productsQuery } from "@/lib/api";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { productsQuery, storiesQuery } from "@/lib/api";
+import { StoriesRow } from "@/components/site/StoriesRow";
 
 const TITLE = "iPad Rythme — Votre iPad Apple au paiement qui vous correspond";
 const DESCRIPTION =
@@ -60,10 +66,26 @@ const WHY = [
 ];
 
 const STEPS = [
-  { n: "01", t: "Choisissez votre iPad", d: "Modèle, stockage, couleur et connectivité dans le catalogue." },
-  { n: "02", t: "Choisissez votre formule", d: "Cash, Flex ou Tontine, avec les conditions affichées clairement." },
-  { n: "03", t: "Payez en sécurité", d: "Wave, Orange Money ou carte bancaire, confirmation côté serveur." },
-  { n: "04", t: "Recevez votre iPad", d: "Suivi de préparation et de livraison dans votre espace client." },
+  {
+    n: "01",
+    t: "Choisissez votre iPad",
+    d: "Modèle, stockage, couleur et connectivité dans le catalogue.",
+  },
+  {
+    n: "02",
+    t: "Choisissez votre formule",
+    d: "Cash, Flex ou Tontine, avec les conditions affichées clairement.",
+  },
+  {
+    n: "03",
+    t: "Payez en sécurité",
+    d: "Wave, Orange Money ou carte bancaire, confirmation côté serveur.",
+  },
+  {
+    n: "04",
+    t: "Recevez votre iPad",
+    d: "Suivi de préparation et de livraison dans votre espace client.",
+  },
 ];
 
 const FAQ = [
@@ -109,11 +131,13 @@ const TESTIMONIALS = [
 
 function Landing() {
   const { data: products = [], isLoading } = useQuery(productsQuery());
+  const { data: stories = [] } = useQuery(storiesQuery());
   const featured = products.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
+      <StoriesRow stories={stories} />
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-hero">
@@ -147,7 +171,9 @@ function Landing() {
                 { k: "Paiement", v: "Wave · OM" },
               ].map((s) => (
                 <div key={s.k} className="glass rounded-2xl px-3 py-3">
-                  <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.k}</dt>
+                  <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    {s.k}
+                  </dt>
                   <dd className="mt-1 text-sm font-semibold">{s.v}</dd>
                 </div>
               ))}
@@ -205,7 +231,8 @@ function Landing() {
             <div>
               <h2 className="text-3xl font-bold sm:text-4xl">Nos iPad</h2>
               <p className="mt-3 max-w-lg text-muted-foreground">
-                Une sélection contrôlée, avec les prix Cash, Tontine et Flex affichés pour chaque modèle.
+                Une sélection contrôlée, avec les prix Cash, Tontine et Flex affichés pour chaque
+                modèle.
               </p>
             </div>
             <Button asChild variant="outline">
@@ -266,7 +293,10 @@ function Landing() {
               "Reçus et références de transaction",
               "Aucun solde modifiable par le client",
             ].map((li) => (
-              <li key={li} className="flex items-center gap-3 rounded-2xl bg-card/70 px-4 py-3 text-sm">
+              <li
+                key={li}
+                className="flex items-center gap-3 rounded-2xl bg-card/70 px-4 py-3 text-sm"
+              >
                 <Check className="h-4 w-4 text-success" /> {li}
               </li>
             ))}
@@ -281,7 +311,9 @@ function Landing() {
           <div className="mt-10 grid gap-5 md:grid-cols-3">
             {TESTIMONIALS.map((t) => (
               <figure key={t.name} className="glass hover-lift rounded-3xl p-6">
-                <blockquote className="text-sm leading-relaxed text-foreground/85">“{t.text}”</blockquote>
+                <blockquote className="text-sm leading-relaxed text-foreground/85">
+                  “{t.text}”
+                </blockquote>
                 <figcaption className="mt-5 flex items-center gap-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-primary text-xs font-semibold text-primary-foreground">
                     {t.name.slice(0, 1)}
@@ -304,8 +336,12 @@ function Landing() {
           <Accordion type="single" collapsible className="mt-8">
             {FAQ.map((item, i) => (
               <AccordionItem key={item.q} value={`item-${i}`}>
-                <AccordionTrigger className="text-left text-sm font-semibold">{item.q}</AccordionTrigger>
-                <AccordionContent className="text-sm text-muted-foreground">{item.a}</AccordionContent>
+                <AccordionTrigger className="text-left text-sm font-semibold">
+                  {item.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground">
+                  {item.a}
+                </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
@@ -319,8 +355,8 @@ function Landing() {
             <Users className="mx-auto h-10 w-10 opacity-80" />
             <h2 className="mt-6 text-3xl font-bold sm:text-4xl">Prêt à commencer ?</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm opacity-90 sm:text-base">
-              Créez votre compte, choisissez votre iPad et démarrez la formule qui correspond à votre
-              budget.
+              Créez votre compte, choisissez votre iPad et démarrez la formule qui correspond à
+              votre budget.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Button asChild variant="glass" size="xl">

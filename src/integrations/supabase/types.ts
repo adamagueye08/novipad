@@ -760,6 +760,50 @@ export type Database = {
           },
         ]
       }
+      stories: {
+        Row: {
+          id: string
+          title: string | null
+          media_url: string
+          media_type: Database["public"]["Enums"]["story_media_type"]
+          product_id: string | null
+          is_active: boolean
+          created_by: string
+          created_at: string
+          expires_at: string
+        }
+        Insert: {
+          id?: string
+          title?: string | null
+          media_url: string
+          media_type: Database["public"]["Enums"]["story_media_type"]
+          product_id?: string | null
+          is_active?: boolean
+          created_by: string
+          created_at?: string
+          expires_at: string
+        }
+        Update: {
+          id?: string
+          title?: string | null
+          media_url?: string
+          media_type?: Database["public"]["Enums"]["story_media_type"]
+          product_id?: string | null
+          is_active?: boolean
+          created_by?: string
+          created_at?: string
+          expires_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stories_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       settings: {
         Row: {
           key: string
@@ -1095,6 +1139,7 @@ export type Database = {
         | "REFUNDED"
       purchase_formula: "CASH" | "FLEX" | "TONTINE"
       request_status: "PENDING" | "APPROVED" | "REJECTED" | "REFUNDED"
+      story_media_type: "IMAGE" | "VIDEO"
       tontine_status: "DRAFT" | "OPEN" | "ACTIVE" | "CLOSED"
       unit_status:
         | "AVAILABLE"
