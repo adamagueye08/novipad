@@ -18,7 +18,8 @@
 3. [DevOps](#3-devops)
 4. [Cloud](#4-cloud)
 5. [Parcours métier expliqués](#5-parcours-métier-expliqués)
-6. [Glossaire rapide](#6-glossaire-rapide)
+6. [Explication détaillée, fichier par fichier](#7-explication-détaillée-fichier-par-fichier)
+7. [Glossaire rapide](#8-glossaire-rapide)
 
 ---
 
@@ -274,7 +275,328 @@ spécialisés plutôt que tout réimplémenter soi-même.
 
 ---
 
-## 6. Glossaire rapide
+## 7. Explication détaillée, fichier par fichier
+
+> Cette section va en profondeur : après l'avoir lue en gardant les fichiers
+> ouverts à côté, tu dois pouvoir relire n'importe quelle page du projet et
+> comprendre chaque ligne. L'objectif n'est pas de mémoriser, mais de
+> reconnaître les **patterns** (les mêmes reviennent partout).
+
+### 7.0 Les briques transversales — à comprendre AVANT tout le reste
+
+Ces quelques concepts reviennent dans presque tous les fichiers. Une fois
+qu'ils sont clairs, lire n'importe quelle page devient mécanique.
+
+#### a) React : composant fonctionnel + hooks
+
+Chaque page est une simple fonction JavaScript qui retourne du JSX (du HTML
+écrit dans du JS) :
+
+```tsx
+function FormulasPage() {
+  return <div>...</div>;
+}
+```
+
+Les **hooks** (fonctions qui commencent par `use`) donnent des
+"super-pouvoirs" à ce composant :
+- `useState("")` → une variable qui, quand elle change, refait afficher le
+  composant automatiquement (ex: le champ `amount` du formulaire de dépôt)
+- `useEffect(() => {...}, [])` → exécute du code après l'affichage (ex:
+  `use-auth.ts` s'abonne aux changements de connexion)
+
+📍 Exemple simple à lire en premier : `src/hooks/use-auth.ts`
+
+#### b) TanStack Router — le routage par fichiers
+
+Chaque fichier dans `src/routes/` devient automatiquement une URL. Le nom
+du fichier détermine l'URL :
+- `src/routes/formules.tsx` → `/formules`
+- `src/routes/_authenticated/dashboard.tsx` → `/dashboard` (le préfixe
+  `_authenticated/` groupe les pages protégées SANS apparaître dans l'URL)
+- `src/routes/_authenticated/admin/produits.tsx` → `/admin/produits`
+- `src/routes/commander.$slug.tsx` → `/commander/nom-du-produit` (le `$`
+  signifie "paramètre dynamique", récupéré avec `Route.useParams()`)
+
+Chaque fichier de route exporte un objet `Route` créé avec
+`createFileRoute("/chemin")({ component: MonComposant })`. **Important** :
+`src/routeTree.gen.ts` est un fichier **généré automatiquement** à partir
+de ces fichiers de route — normalement, on ne le modifie jamais à la main
+(je l'ai fait manuellement dans ce projet uniquement parce que je n'avais
+pas accès à l'outil de génération automatique dans mon environnement ; toi,
+en local, la commande `bun run dev` le régénère toute seule dès que tu
+ajoutes un fichier dans `routes/`).
+
+#### c) TanStack Query — aller chercher des données
+
+Plutôt que d'écrire soi-même la gestion du chargement/erreur/cache, on
+utilise `useQuery` :
+
+```tsx
+const { data, isLoading } = useQuery({
+  queryKey: ["admin-products"],   // identifiant unique de cette donnée
+  queryFn: () => fetchProducts(), // comment aller la chercher
+});
+```
+
+`queryKey` sert aussi à **invalider le cache** après une modification :
+`queryClient.invalidateQueries({ queryKey: ["admin-products"] })` force
+TanStack Query à refaire la requête (utilisé après chaque création/
+modification dans les pages admin).
+
+#### d) `createServerFn` — le pont entre le navigateur et le serveur
+
+C'est LE pattern le plus important du projet. Une fonction serveur se
+définit en 2 parties toujours dans le même ordre :
+
+```ts
+export const adminCreateProductFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])         // 1. qui a le droit d'appeler ?
+  .inputValidator((data: unknown) =>          // 2. les données reçues sont-elles valides ?
+    z.object({ product: productPatchSchema }).parse(data),
+  )
+  .handler(async ({ data, context }) => {     // 3. le vrai code, exécuté SEULEMENT côté serveur
+    const { ensureStaff, createProduct } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return createProduct({ product: data.product, actorId: context.userId });
+  });
+```
+
+Ce code est écrit dans un fichier `*.functions.ts`, mais **n'est jamais
+envoyé au navigateur du client** — TanStack Start le remplace
+automatiquement par un simple appel réseau. Le vrai travail (accès à la
+base de données) est délégué à un fichier `*.server.ts` (import dynamique
+`await import(...)`, qui garantit que ce code ne peut techniquement pas
+finir dans le bundle JavaScript envoyé au navigateur).
+
+Côté composant React, on "active" cette fonction avec `useServerFn` :
+
+```tsx
+const createProduct = useServerFn(adminCreateProductFn);
+await createProduct({ data: { product: {...} } });
+```
+
+📍 **Résumé du flux** : Composant React → `useServerFn` → réseau (protégé
+CSRF) → `createServerFn` → `middleware` (auth) → `inputValidator` (Zod) →
+`handler` → fichier `*.server.ts` → Supabase.
+
+#### e) Zod — valider des données à l'exécution
+
+TypeScript vérifie les types **au moment d'écrire le code** (avant même de
+l'exécuter), mais il ne peut RIEN garantir sur des données reçues depuis le
+réseau au moment de l'exécution (un client malveillant peut envoyer
+n'importe quoi). Zod comble ce trou :
+
+```ts
+z.object({
+  productId: z.string().uuid(),        // doit être un UUID valide
+  amount: z.number().int().nonnegative(), // entier, jamais négatif
+  reason: z.string().max(500).optional(), // texte, 500 caractères max, peut être absent
+})
+```
+
+Si les données ne respectent pas ce schéma, `.parse(data)` lève une erreur
+et le `handler` n'est **jamais exécuté**. C'est une couche de sécurité à
+part entière : jamais faire confiance aux données venues du client.
+
+#### f) shadcn/ui — les briques d'interface
+
+Les composants dans `src/components/ui/` (`Button`, `Dialog`, `Table`,
+`Select`...) ne sont pas une librairie externe classique — ce sont des
+fichiers **copiés dans le projet**, basés sur Radix UI (accessibilité) +
+Tailwind CSS (classes utilitaires comme `flex`, `gap-4`, `rounded-2xl`).
+Avantage : on peut les modifier directement si besoin, pas de "boîte
+noire".
+
+#### g) Le client Supabase : deux instances différentes, jamais interchangeables
+
+| Fichier | Instance | Clé utilisée | Où l'utiliser |
+|---|---|---|---|
+| `src/integrations/supabase/client.ts` | `supabase` | Clé publique ("publishable") | Dans les composants React (navigateur) — respecte RLS |
+| `src/integrations/supabase/client.server.ts` | `supabaseAdmin` | Clé "service role" (secrète) | Dans les fichiers `*.server.ts` uniquement — **contourne** RLS |
+
+Confondre les deux serait une faille de sécurité grave : la clé service
+role ne doit **jamais** atteindre le navigateur (elle donnerait un accès
+total à la base à n'importe qui inspecte le code source de la page).
+
+---
+
+### 7.1 Authentification
+
+| Fichier | Rôle |
+|---|---|
+| `src/hooks/use-auth.ts` | Hook React qui expose l'utilisateur connecté (`user`, `session`) partout dans l'app, et se met à jour automatiquement (connexion/déconnexion) |
+| `src/routes/_authenticated/route.tsx` | Le "garde" : toutes les pages sous `_authenticated/` (dashboard, admin, commander) passent par `beforeLoad`, qui vérifie la session Supabase et redirige vers `/auth` si absente — **avant même que la page ne s'affiche** |
+| `src/integrations/supabase/auth-middleware.ts` | Équivalent côté serveur : `requireSupabaseAuth`, utilisé dans `.middleware([...])` de chaque fonction serveur sensible, vérifie le jeton envoyé par le navigateur et fournit `context.userId` |
+| `src/routes/auth.tsx` | Formulaire de connexion/inscription |
+
+**À retenir** : il y a TOUJOURS deux niveaux de vérification — un côté
+frontend (`_authenticated/route.tsx`, pour l'expérience utilisateur : éviter
+d'afficher une page puis rediriger) et un côté serveur
+(`requireSupabaseAuth`, pour la vraie sécurité). **Le frontend seul ne
+protège jamais rien** : n'importe qui peut appeler une fonction serveur
+directement (via les outils développeur du navigateur) en contournant
+totalement l'interface. C'est le contrôle serveur qui compte réellement.
+
+### 7.2 Pages publiques (accessibles sans compte)
+
+| Fichier | Contenu |
+|---|---|
+| `src/routes/index.tsx` | Page d'accueil |
+| `src/routes/catalogue.index.tsx` | Liste des iPad actifs (`productsQuery()` dans `src/lib/api.ts`, filtré `is_active = true`) |
+| `src/routes/formules.tsx` | Explication des 3 formules Cash/Flex/Tontine, étapes, FAQ — page 100% statique (pas d'appel serveur), juste du contenu |
+| `src/routes/tontines.tsx` | Liste des tontines ouvertes, via `tontinesQuery()` |
+| `src/routes/auth.tsx` | Connexion / inscription |
+
+📍 `src/lib/api.ts` centralise les requêtes **publiques** en lecture seule
+(via le client `supabase` classique, donc soumises à RLS — un visiteur non
+connecté ne peut lire que ce que les policies autorisent explicitement,
+typiquement les produits actifs et les tontines ouvertes).
+
+### 7.3 Le parcours d'achat — `commander.$slug.tsx`
+
+C'est la page la plus complexe côté client : un seul formulaire qui change
+de comportement selon la formule choisie (`formula === "CASH"` vs
+`"FLEX"`).
+
+**Ce qu'il faut comprendre du flux** :
+1. Le `slug` de l'URL (ex: `/commander/ipad-11e-generation`) identifie le
+   produit — récupéré et affiché
+2. Le client choisit Cash ou Flex, remplit adresse/téléphone
+3. À la soumission (`onSubmit`), on appelle soit `placeCashOrderFn`
+   (`useServerFn(placeCashOrderFn)`) soit `openFlexAccountFn` +
+   éventuellement `depositToFlexFn`
+4. **Point clé à retenir** : dans les deux cas, si la réponse contient un
+   `redirectUrl`, on fait `window.location.href = res.redirectUrl` — ça
+   quitte complètement le site pour la page de paiement PayTech. On ne sait
+   PAS encore si le client va réellement payer ; la confirmation viendra
+   plus tard, via le webhook (voir section 7.6)
+
+### 7.4 L'espace client — `dashboard.tsx`
+
+Trois blocs indépendants, chacun avec sa propre requête `useQuery` :
+- **Mes commandes** (`orders`) — lecture directe via le client `supabase`
+  (RLS filtre automatiquement sur l'utilisateur connecté)
+- **Mes comptes Flex** (`flex`, `flexDeposits`, `flexCancellations`) — trois
+  requêtes séparées, croisées côté React (`.filter(...)`) plutôt qu'une
+  jointure SQL complexe, pour rester simple à lire
+- **Mes tontines** (`tontines`)
+
+**Deux composants "boîte à outils" à repérer, réutilisés dans plusieurs
+blocs** :
+- `DepositForm` — formulaire de dépôt Flex, redirige vers PayTech
+- `CancelFlexDialog` — la modale d'annulation, qui **calcule en direct** le
+  montant remboursable selon le choix "remboursement" (frais appliqués) ou
+  "crédit" (sans frais), en interrogeant `flexSettingsFn` pour ne jamais
+  coder le pourcentage en dur côté frontend
+
+### 7.5 Le back-office admin (`src/routes/_authenticated/admin/`)
+
+| Fichier | Rôle |
+|---|---|
+| `route.tsx` | Layout partagé : vérifie `myAccessFn` (le rôle staff), affiche le menu (`NAV`), enveloppe toutes les pages admin dans `<Outlet />` |
+| `index.tsx` | Vue d'ensemble — indicateurs agrégés (`adminOverviewFn`) |
+| `produits.tsx` | CRUD complet des iPad (créer/modifier/désactiver), historique des prix |
+| `tontines.tsx` | Demandes d'adhésion (approuver/refuser) + vue d'ensemble par tontine |
+| `flex.tsx` | Demandes d'annulation Flex (approuver/refuser/marquer remboursé) |
+| `commandes.tsx` | Liste des commandes toutes formules confondues, changement de statut |
+| `paiements.tsx` | Liste des paiements, réconciliation manuelle en filet de sécurité |
+| `utilisateurs.tsx` | Liste clients + équipe, changement de rôle, suspension |
+
+**Le pattern répété dans CHAQUE page admin** (une fois compris ici, tu
+reconnais toutes les pages) :
+
+```tsx
+const queryClient = useQueryClient();
+const fetchX = useServerFn(adminXFn);       // lire
+const doY = useServerFn(adminYFn);          // agir (créer/modifier/décider)
+
+const { data, isLoading } = useQuery({ queryKey: ["admin-x"], queryFn: () => fetchX() });
+
+async function onAction() {
+  await doY({ data: {...} });
+  toast.success("...");
+  queryClient.invalidateQueries({ queryKey: ["admin-x"] }); // rafraîchit l'affichage
+}
+```
+
+**Sécurité en profondeur (defense in depth)** — remarque qu'il y a TROIS
+niveaux de protection empilés sur chaque action admin, jamais un seul :
+1. `route.tsx` vérifie `myAccessFn` côté React (n'affiche même pas le menu
+   admin si pas staff)
+2. Chaque `createServerFn` a `.middleware([requireSupabaseAuth])` (faut être
+   connecté)
+3. Chaque `handler` appelle `await ensureStaff(context.supabase,
+   context.userId)` **avant** de faire quoi que ce soit (faut être staff)
+
+Si un des trois niveaux avait un bug, les deux autres protègent encore.
+
+### 7.6 La couche serveur — où vit toute la logique métier
+
+C'est le cœur du projet. Toujours la même séparation en deux fichiers par
+domaine :
+
+| Domaine | `*.functions.ts` (le "contrat" exposé) | `*.server.ts` (le vrai travail) |
+|---|---|---|
+| Achat/paiement | `checkout.functions.ts` | `checkout.server.ts` |
+| Back-office | `admin.functions.ts` | `admin.server.ts` |
+| PayTech | — (pas de `createServerFn`, voir ci-dessous) | `paytech.server.ts` |
+
+**Pourquoi cette séparation ?** `checkout.functions.ts` ne contient QUE la
+définition des `createServerFn` (validation Zod + appel au vrai code). Le
+vrai code (accès Supabase, calculs, logique métier) est dans
+`checkout.server.ts`, importé dynamiquement (`await import(...)`) depuis le
+`handler`. Ça permet à `paytech.server.ts` (appelé aussi par le webhook
+dans `server.ts`, en dehors de tout `createServerFn`) de réutiliser les
+mêmes fonctions métier (`confirmPaytechPayment`) sans dépendre du mécanisme
+RPC.
+
+**Fonctions clés de `checkout.server.ts` à bien connaître** :
+- `placeCashOrder`, `openFlexAccount`, `depositToFlex`, `payContribution`
+  → créent une commande/un compte/un paiement en base, **puis** appellent
+  `createPaytechPayment` (sauf paiement à la livraison) pour obtenir
+  `redirectUrl`
+- `confirmPaytechPayment` → LA fonction pivot, appelée uniquement par le
+  webhook, qui finalise réellement chaque opération (voir section 2.4 sur
+  l'idempotence)
+- `finalizeFlexAccountIfCompleted` → déclenchée automatiquement quand un
+  compte Flex atteint 100%, crée la commande + livraison sans action du
+  client
+
+**`src/lib/paytech.server.ts`** — le seul fichier qui parle réellement au
+réseau PayTech (`fetch(...)` vers `paytech.sn/api`). Toute la logique de
+sécurité (section 2.2) y vit : `createPaytechPayment` (créer une demande de
+paiement) et `verifyPaytechIpn` (vérifier une notification).
+
+**`src/server.ts`** — déjà détaillé en section 2.1 et 2.3. À retenir : ce
+fichier route `/api/paytech/ipn` à la main, avant de laisser TanStack Start
+gérer tout le reste.
+
+### 7.7 La couche données
+
+| Fichier | Rôle |
+|---|---|
+| `src/integrations/supabase/types.ts` | Types TypeScript générés depuis le schéma de la base — normalement regénérés automatiquement par `supabase gen types` ; ici, édités à la main à certains endroits car mon environnement n'a pas accès réseau à Supabase (voir les migrations "manuelles" section 3.1) |
+| `supabase/migrations/*.sql` | L'historique complet du schéma, dans l'ordre chronologique (nom de fichier = date) |
+| `supabase/config.toml` | Configuration du projet Supabase (non détaillé ici) |
+
+**Comment lire une migration** : chaque fichier commence généralement par
+un commentaire expliquant le "pourquoi" (regarde
+`20260828070000_flex_completion_and_cancellation.sql` comme exemple de
+style à suivre pour toute future migration).
+
+### 7.8 Le "câblage" du framework (à connaître, rarement à modifier)
+
+| Fichier | Rôle |
+|---|---|
+| `src/router.tsx` | Crée l'instance du routeur (`createRouter`), y attache TanStack Query (`context: { queryClient }`) |
+| `src/start.ts` | Configuration TanStack Start : middleware CSRF (voir section 2.1) |
+| `src/routeTree.gen.ts` | Généré automatiquement, ne pas éditer à la main sauf cas de force majeure (voir 7.0-b) |
+| `vite.config.ts` | Configuration du build (Vite + plugin TanStack Start + Nitro/Cloudflare) |
+
+---
+
+## 8. Glossaire rapide
 
 | Terme | Définition simple |
 |---|---|
