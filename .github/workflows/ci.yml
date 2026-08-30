@@ -1,0 +1,23 @@
+name: Vérifications (CI)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Installer les dépendances
+        run: bun install
+      - name: Vérification des types (TypeScript)
+        run: bunx tsc --noEmit -p tsconfig.json
+      - name: Vérification du style (ESLint, informatif pour l'instant)
+        run: bunx eslint .
+        continue-on-error: true
