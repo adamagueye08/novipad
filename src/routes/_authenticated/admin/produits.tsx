@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Boxes, Pencil, Plus } from "lucide-react";
 import { adminProductsFn, adminCreateProductFn, adminUpdateProductFn } from "@/lib/admin.functions";
+import { ImageUploader } from "@/components/ImageUploader";
 import { formatFcfa } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +69,7 @@ type FormState = {
   connectivity: string;
   condition: string;
   description: string;
-  imagesText: string;
+  images: string[];
   warranty_months: string;
   purchase_cost_usd: string;
   shipping_cost_usd: string;
@@ -89,7 +90,7 @@ const EMPTY_FORM: FormState = {
   connectivity: "",
   condition: "Neuf",
   description: "",
-  imagesText: "",
+  images: [],
   warranty_months: "12",
   purchase_cost_usd: "0",
   shipping_cost_usd: "0",
@@ -111,7 +112,7 @@ function productToForm(p: ProductRow): FormState {
     connectivity: p.connectivity ?? "",
     condition: p.condition ?? "",
     description: p.description ?? "",
-    imagesText: (p.images ?? []).join("\n"),
+    images: p.images ?? [],
     warranty_months: String(p.warranty_months ?? 0),
     purchase_cost_usd: String(p.purchase_cost_usd ?? 0),
     shipping_cost_usd: String(p.shipping_cost_usd ?? 0),
@@ -143,10 +144,7 @@ function buildPayload(form: FormState) {
     connectivity: form.connectivity.trim() || null,
     condition: form.condition.trim() || null,
     description: form.description.trim() || null,
-    images: form.imagesText
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean),
+    images: form.images,
     warranty_months: Number(form.warranty_months) || 0,
     purchase_cost_usd: Number(form.purchase_cost_usd) || 0,
     shipping_cost_usd: Number(form.shipping_cost_usd) || 0,
@@ -253,16 +251,7 @@ function ProductForm({
         />
       </div>
 
-      <div className="sm:col-span-2">
-        <Label htmlFor="images">Images (une URL par ligne)</Label>
-        <Textarea
-          id="images"
-          rows={2}
-          value={form.imagesText}
-          onChange={(e) => onChange({ imagesText: e.target.value })}
-          placeholder={"https://.../ipad-1.jpg\nhttps://.../ipad-2.jpg"}
-        />
-      </div>
+      <ImageUploader images={form.images} onChange={(images) => onChange({ images })} />
 
       <div className="rounded-xl border border-dashed border-border/60 p-3 sm:col-span-2">
         <p className="mb-2 text-xs font-medium text-muted-foreground">
