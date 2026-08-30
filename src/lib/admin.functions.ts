@@ -269,3 +269,27 @@ export const adminMarkFlexCancellationRefundedFn = createServerFn({ method: "POS
     await ensureStaff(context.supabase, context.userId);
     return markFlexCancellationRefunded({ ...data, actorId: context.userId });
   });
+
+export const adminSettingsFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { ensureStaff, listSettings } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return listSettings();
+  });
+
+export const adminUpdateSettingFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        key: z.enum(["company", "flex", "stock", "delivery", "terms"]),
+        value: z.record(z.string(), z.unknown()),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, updateSetting } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return updateSetting({ ...data, actorId: context.userId });
+  });

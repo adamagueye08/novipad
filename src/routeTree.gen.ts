@@ -27,6 +27,7 @@ import { Route as AuthenticatedAdminFlexRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminCommandesRouteImport } from './routes/_authenticated/admin/commandes'
 import { Route as AuthenticatedAdminPaiementsRouteImport } from './routes/_authenticated/admin/paiements'
 import { Route as AuthenticatedAdminUtilisateursRouteImport } from './routes/_authenticated/admin/utilisateurs'
+import { Route as AuthenticatedAdminParametresRouteImport } from './routes/_authenticated/admin/parametres'
 import { Route as AuthenticatedCommanderSlugRouteImport } from './routes/_authenticated/commander.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -123,6 +124,12 @@ const AuthenticatedAdminUtilisateursRoute =
     path: '/utilisateurs',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminParametresRoute =
+  AuthenticatedAdminParametresRouteImport.update({
+    id: '/parametres',
+    path: '/parametres',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedCommanderSlugRoute =
   AuthenticatedCommanderSlugRouteImport.update({
     id: '/commander/$slug',
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
   '/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
+  '/admin/parametres': typeof AuthenticatedAdminParametresRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -168,6 +176,7 @@ export interface FileRoutesByTo {
   '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
   '/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
+  '/admin/parametres': typeof AuthenticatedAdminParametresRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/admin/commandes'
     | '/admin/paiements'
     | '/admin/utilisateurs'
+    | '/admin/parametres'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/admin/commandes'
     | '/admin/paiements'
     | '/admin/utilisateurs'
+    | '/admin/parametres'
   id:
     | '__root__'
     | '/'
@@ -386,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUtilisateursRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/parametres': {
+      id: '/_authenticated/admin/parametres'
+      path: '/parametres'
+      fullPath: '/admin/parametres'
+      preLoaderRoute: typeof AuthenticatedAdminParametresRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/commander/$slug': {
       id: '/_authenticated/commander/$slug'
       path: '/commander/$slug'
@@ -404,6 +422,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminCommandesRoute: typeof AuthenticatedAdminCommandesRoute
   AuthenticatedAdminPaiementsRoute: typeof AuthenticatedAdminPaiementsRoute
   AuthenticatedAdminUtilisateursRoute: typeof AuthenticatedAdminUtilisateursRoute
+  AuthenticatedAdminParametresRoute: typeof AuthenticatedAdminParametresRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -415,6 +434,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminCommandesRoute: AuthenticatedAdminCommandesRoute,
     AuthenticatedAdminPaiementsRoute: AuthenticatedAdminPaiementsRoute,
     AuthenticatedAdminUtilisateursRoute: AuthenticatedAdminUtilisateursRoute,
+    AuthenticatedAdminParametresRoute: AuthenticatedAdminParametresRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =

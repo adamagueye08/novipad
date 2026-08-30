@@ -597,3 +597,38 @@ export async function markFlexCancellationRefunded(input: { actorId: string; req
 
   return { ok: true };
 }
+
+// ---------------------------------------------------------------------------
+// Paramètres (table settings, clé/valeur JSON)
+// ---------------------------------------------------------------------------
+
+export async function listSettings() {
+  const { data, error } = await supabaseAdmin.from("settings").select("key,value,updated_at");
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function updateSetting(input: { actorId: string; key: string; value: object }) {
+  const { data: before } = await supabaseAdmin
+    .from("settings")
+    .select("value")
+    .eq("key", input.key)
+    .maybeSingle();
+
+  const { error } = await supabaseAdmin
+    .from("settings")
+    .update({ value: input.value as never })
+    .eq("key", input.key);
+  if (error) throw new Error(error.message);
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "settings.update",
+    entityType: "settings",
+    entityId: input.key,
+    oldValue: before?.value ?? null,
+    newValue: input.value,
+  });
+
+  return { ok: true };
+}

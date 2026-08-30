@@ -5,6 +5,7 @@ import {
   BarChart3,
   Boxes,
   CreditCard,
+  Settings,
   ShieldCheck,
   ShoppingBag,
   Users,
@@ -41,6 +42,7 @@ const NAV = [
   { to: "/admin/flex", label: "Flex — Annulations", icon: Wallet, ready: true },
   { to: "/admin/tontines", label: "Tontines", icon: ShieldCheck, ready: true },
   { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, ready: true },
+  { to: "/admin/parametres", label: "Paramètres", icon: Settings, ready: true },
 ] as const;
 
 function AdminLayout() {
