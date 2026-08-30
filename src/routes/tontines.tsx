@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Users, CalendarClock, Tablet } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { AnimatedBackground } from "@/components/site/AnimatedBackground";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { tontinesQuery } from "@/lib/api";
@@ -12,7 +13,7 @@ import { formatFcfa, formatDate, FREQUENCY_LABELS } from "@/lib/format";
 import { useAuth } from "@/hooks/use-auth";
 import { joinTontineFn } from "@/lib/checkout.functions";
 
-const TITLE = "Tontines iPad ouvertes — iPad Rythme";
+const TITLE = "Tontines iPad ouvertes — JokkoTech";
 const DESCRIPTION =
   "Rejoignez une tontine encadrée : cotisations régulières, règles d'attribution transparentes et suivi complet de votre iPad.";
 
@@ -32,13 +33,16 @@ function TontinesPage() {
   const { data: tontines = [], isLoading } = useQuery(tontinesQuery());
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <AnimatedBackground />
       <SiteHeader />
       <main className="container-page py-12 md:py-16">
-        <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Tontines ouvertes</h1>
+        <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
+          Tontines ouvertes
+        </h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Chaque tontine réunit un nombre limité de membres autour d'un modèle d'iPad. Cotisations, durée et règles
-          d'attribution sont affichées avant toute adhésion.
+          Chaque tontine réunit un nombre limité de membres autour d'un modèle d'iPad. Cotisations,
+          durée et règles d'attribution sont affichées avant toute adhésion.
         </p>
 
         {isLoading ? (
@@ -49,7 +53,8 @@ function TontinesPage() {
           </div>
         ) : tontines.length === 0 ? (
           <p className="mt-12 text-muted-foreground">
-            Aucune tontine n'est ouverte pour le moment. Créez un compte pour être prévenu de la prochaine ouverture.
+            Aucune tontine n'est ouverte pour le moment. Créez un compte pour être prévenu de la
+            prochaine ouverture.
           </p>
         ) : (
           <div className="mt-10 grid gap-6 md:grid-cols-2">
@@ -94,7 +99,8 @@ function TontinesPage() {
                     <Tablet className="h-4 w-4 text-primary" /> {t.ipads_available} iPad à attribuer
                   </li>
                   <li className="flex items-center gap-2">
-                    <CalendarClock className="h-4 w-4 text-primary" /> Conditions version {t.terms_version}
+                    <CalendarClock className="h-4 w-4 text-primary" /> Conditions version{" "}
+                    {t.terms_version}
                   </li>
                 </ul>
 
@@ -106,7 +112,6 @@ function TontinesPage() {
                 )}
 
                 <JoinButton tontineId={t.id} />
-
               </article>
             ))}
           </div>

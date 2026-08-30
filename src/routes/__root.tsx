@@ -78,14 +78,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "iPad Rythme — iPad importés des USA, à votre rythme" },
+      { title: "JokkoTech — iPad importés des USA, à votre rythme" },
       {
         name: "description",
         content:
           "Achetez votre iPad en Cash, en épargne Flex ou via une tontine. Produits importés des USA, garantie incluse.",
       },
-      { name: "author", content: "iPad Rythme" },
-      { property: "og:site_name", content: "iPad Rythme" },
+      { name: "author", content: "JokkoTech" },
+      { property: "og:site_name", content: "JokkoTech" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

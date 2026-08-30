@@ -1,4 +1,4 @@
-# NoviPad
+# JokkoTech
 
 Plateforme e-commerce premium dédiée à la vente d'iPad, avec trois formules de paiement flexibles : Cash, Flex (épargne progressive) et Tontine (achat collectif).
 

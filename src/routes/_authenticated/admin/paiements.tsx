@@ -19,7 +19,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/admin/paiements")({
   head: () => ({
-    meta: [{ title: "Paiements — iPad Rythme" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Paiements — JokkoTech" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminPaymentsPage,
 });

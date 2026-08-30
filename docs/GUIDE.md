@@ -1,4 +1,4 @@
-# NoviPad — Documentation pédagogique
+# JokkoTech — Documentation pédagogique
 
 > **Ce document a un objectif d'apprentissage**, pas seulement de référence.
 > Chaque section explique un concept (cybersécurité, DevOps, cloud) à travers
@@ -50,7 +50,7 @@
 
 **Différence clé avec un projet "classique" (ex: ARSN)** : ARSN sépare
 frontend (Vercel) et backend (Render) en deux déploiements distincts qui se
-parlent en HTTP. NoviPad utilise **TanStack Start**, un framework qui compile
+parlent en HTTP. JokkoTech utilise **TanStack Start**, un framework qui compile
 le frontend React ET les fonctions serveur (`checkout.server.ts`,
 `admin.server.ts`...) en **un seul artefact**, déployé sur **Cloudflare
 Workers**. Une seule URL, pas de CORS à gérer, un seul endroit où tout
@@ -73,7 +73,7 @@ casse (ou tout marche).
 ### 2.1 CSRF et pourquoi le webhook PayTech est à part
 
 **Le problème que CSRF résout** : sans protection, un site malveillant
-pourrait faire exécuter des actions sur NoviPad à l'insu d'un client connecté
+pourrait faire exécuter des actions sur JokkoTech à l'insu d'un client connecté
 (ex: un bouton caché qui déclenche "annuler mon compte Flex" pendant qu'il
 visite un autre site). TanStack Start protège `createServerFn` avec un jeton
 CSRF que seul le navigateur du client légitime possède (voir

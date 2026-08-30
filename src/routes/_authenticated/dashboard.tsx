@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { AnimatedBackground } from "@/components/site/AnimatedBackground";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Input } from "@/components/ui/input";
 import { formatFcfa, formatDate, progressPercent } from "@/lib/format";
@@ -33,13 +34,13 @@ import {
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Mon espace client — iPad Rythme" },
+      { title: "Mon espace client — JokkoTech" },
       {
         name: "description",
         content:
-          "Suivez vos commandes iPad, vos dépôts Flex et vos tontines depuis votre espace client iPad Rythme.",
+          "Suivez vos commandes iPad, vos dépôts Flex et vos tontines depuis votre espace client JokkoTech.",
       },
-      { property: "og:title", content: "Mon espace client — iPad Rythme" },
+      { property: "og:title", content: "Mon espace client — JokkoTech" },
       {
         property: "og:description",
         content: "Commandes, épargne Flex et tontines réunies dans un seul tableau de bord.",
@@ -181,7 +182,8 @@ function DashboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <AnimatedBackground />
       <SiteHeader />
       <main className="container-page py-10">
         <div className="flex flex-wrap items-end justify-between gap-4">

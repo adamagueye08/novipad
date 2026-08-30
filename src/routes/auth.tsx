@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 
-const TITLE = "Connexion et création de compte — iPad Rythme";
+const TITLE = "Connexion et création de compte — JokkoTech";
 const DESCRIPTION =
-  "Accédez à votre espace client iPad Rythme pour suivre vos commandes, votre épargne Flex et vos cotisations de tontine.";
+  "Accédez à votre espace client JokkoTech pour suivre vos commandes, votre épargne Flex et vos cotisations de tontine.";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>): { mode?: "signup" | "login" } => ({
@@ -86,7 +86,7 @@ function AuthPage() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
             <Tablet className="h-4 w-4" />
           </span>
-          <span className="font-display text-base font-semibold">iPad Rythme</span>
+          <span className="font-display text-base font-semibold">JokkoTech</span>
         </Link>
 
         <div className="glass mt-8 rounded-4xl p-7 md:p-9">

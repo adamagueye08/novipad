@@ -27,7 +27,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/admin/utilisateurs")({
   head: () => ({
-    meta: [{ title: "Utilisateurs — iPad Rythme" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Utilisateurs — JokkoTech" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminUsersPage,
 });

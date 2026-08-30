@@ -22,7 +22,7 @@ export function SiteHeader() {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
             <Tablet className="h-4.5 w-4.5" />
           </span>
-          <span className="font-display text-base font-semibold tracking-tight">iPad Rythme</span>
+          <span className="font-display text-base font-semibold tracking-tight">JokkoTech</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

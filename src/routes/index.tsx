@@ -14,6 +14,7 @@ import {
 import heroIpad from "@/assets/hero-ipad.png";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { AnimatedBackground } from "@/components/site/AnimatedBackground";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ProductCard } from "@/components/site/ProductCard";
 import { FormulaCards } from "@/components/site/FormulaCards";
@@ -26,7 +27,7 @@ import {
 import { productsQuery, storiesQuery } from "@/lib/api";
 import { StoriesRow } from "@/components/site/StoriesRow";
 
-const TITLE = "iPad Rythme — Votre iPad Apple au paiement qui vous correspond";
+const TITLE = "JokkoTech — Votre iPad Apple au paiement qui vous correspond";
 const DESCRIPTION =
   "Achetez votre iPad Apple importé des États-Unis au comptant, en épargne Flex ou en tontine encadrée. Paiement Wave, Orange Money et carte bancaire.";
 
@@ -135,7 +136,8 @@ function Landing() {
   const featured = products.slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <AnimatedBackground />
       <SiteHeader />
       <StoriesRow stories={stories} />
 

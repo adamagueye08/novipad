@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BadgeCheck, Tablet, ShieldCheck } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { AnimatedBackground } from "@/components/site/AnimatedBackground";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { productQuery } from "@/lib/api";
@@ -10,13 +11,13 @@ import { formatFcfa } from "@/lib/format";
 export const Route = createFileRoute("/catalogue/$slug")({
   head: () => ({
     meta: [
-      { title: "Fiche iPad — iPad Rythme" },
+      { title: "Fiche iPad — JokkoTech" },
       {
         name: "description",
         content:
           "Caractéristiques détaillées, garantie et prix Cash, Flex et Tontine de cet iPad importé des États-Unis.",
       },
-      { property: "og:title", content: "Fiche iPad — iPad Rythme" },
+      { property: "og:title", content: "Fiche iPad — JokkoTech" },
       {
         property: "og:description",
         content: "Caractéristiques, garantie et trois formules de paiement pour cet iPad.",
@@ -33,7 +34,8 @@ function ProductPage() {
   const features = Array.isArray(product?.features) ? (product?.features as string[]) : [];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <AnimatedBackground />
       <SiteHeader />
       <main className="container-page py-10 md:py-14">
         <Link
@@ -71,7 +73,9 @@ function ProductPage() {
                   .join(" · ")}
               </p>
 
-              {product.description && <p className="mt-5 text-sm leading-relaxed">{product.description}</p>}
+              {product.description && (
+                <p className="mt-5 text-sm leading-relaxed">{product.description}</p>
+              )}
 
               <div className="mt-7 grid gap-3 sm:grid-cols-3">
                 {[
@@ -88,7 +92,8 @@ function ProductPage() {
 
               <ul className="mt-7 space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <BadgeCheck className="h-4 w-4 text-primary" /> Garantie {product.warranty_months} mois
+                  <BadgeCheck className="h-4 w-4 text-primary" /> Garantie {product.warranty_months}{" "}
+                  mois
                 </li>
                 <li className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-primary" />

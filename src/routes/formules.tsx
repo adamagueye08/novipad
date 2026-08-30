@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check } from "lucide-react";
+import { Check, TrendingUp } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { AnimatedBackground } from "@/components/site/AnimatedBackground";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { FormulaCards } from "@/components/site/FormulaCards";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-const TITLE = "Cash, Flex ou Tontine — Choisir sa formule | iPad Rythme";
+const TITLE = "Cash, Flex ou Tontine — Choisir sa formule | JokkoTech";
 const DESCRIPTION =
   "Comparez les trois façons d'obtenir votre iPad : paiement comptant, épargne progressive Flex ou tontine encadrée entre membres.";
 
@@ -50,7 +51,8 @@ const STEPS = {
 
 function FormulasPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <AnimatedBackground />
       <SiteHeader />
       <main className="container-page py-12 md:py-16">
         <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
@@ -100,12 +102,21 @@ function FormulasPage() {
           </ul>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild variant="hero">
+              <Link to="/catalogue">
+                <TrendingUp className="mr-2 size-4" /> Ouvrir mon compte Flex
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
               <Link to="/catalogue">Voir les iPad disponibles</Link>
             </Button>
             <Button asChild variant="outline">
               <Link to="/tontines">Explorer les tontines</Link>
             </Button>
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Choisissez un iPad et la formule Flex : votre espace d'épargne s'ouvre aussitôt dans
+            votre compte, avec suivi de votre progression en temps réel.
+          </p>
         </section>
 
         <section className="mt-16 max-w-3xl">

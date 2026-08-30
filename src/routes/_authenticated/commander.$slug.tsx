@@ -13,9 +13,9 @@ import { productQuery } from "@/lib/api";
 import { formatFcfa } from "@/lib/format";
 import { placeCashOrderFn, openFlexAccountFn, depositToFlexFn } from "@/lib/checkout.functions";
 
-const TITLE = "Commander votre iPad — iPad Rythme";
+const TITLE = "Commander votre iPad — JokkoTech";
 const DESCRIPTION =
-  "Finalisez votre commande iPad Rythme : formule Cash ou Flex, adresse de livraison et moyen de paiement Wave, Orange Money ou carte.";
+  "Finalisez votre commande JokkoTech : formule Cash ou Flex, adresse de livraison et moyen de paiement Wave, Orange Money ou carte.";
 
 export const Route = createFileRoute("/_authenticated/commander/$slug")({
   head: () => ({

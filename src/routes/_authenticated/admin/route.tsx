@@ -18,13 +18,13 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Back-office — iPad Rythme" },
+      { title: "Back-office — JokkoTech" },
       {
         name: "description",
-        content: "Pilotage des commandes, paiements, stock, tontines et utilisateurs iPad Rythme.",
+        content: "Pilotage des commandes, paiements, stock, tontines et utilisateurs JokkoTech.",
       },
-      { property: "og:title", content: "Back-office — iPad Rythme" },
-      { property: "og:description", content: "Console interne de gestion iPad Rythme." },
+      { property: "og:title", content: "Back-office — JokkoTech" },
+      { property: "og:description", content: "Console interne de gestion JokkoTech." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -78,7 +78,7 @@ function AdminLayout() {
       <header className="border-b border-border/60 bg-card/60 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-6 py-4">
           <Link to="/" className="text-lg font-semibold tracking-tight">
-            iPad Rythme <span className="text-muted-foreground">· Back-office</span>
+            JokkoTech <span className="text-muted-foreground">· Back-office</span>
           </Link>
           <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
             {data.roles.join(" · ")}

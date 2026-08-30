@@ -26,7 +26,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/admin/tontines")({
   head: () => ({
-    meta: [{ title: "Tontines — iPad Rythme" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Tontines — JokkoTech" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminTontinesPage,
 });

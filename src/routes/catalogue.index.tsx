@@ -3,13 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { AnimatedBackground } from "@/components/site/AnimatedBackground";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ProductCard } from "@/components/site/ProductCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { productsQuery } from "@/lib/api";
 
-const TITLE = "Nos iPad disponibles — iPad Rythme";
+const TITLE = "Nos iPad disponibles — JokkoTech";
 const DESCRIPTION =
   "Parcourez les iPad Apple disponibles : capacités, coloris, connectivité et prix Cash, Flex ou Tontine mis à jour en direct.";
 
@@ -41,7 +42,8 @@ function CataloguePage() {
   const list = useMemo(() => {
     const q = search.trim().toLowerCase();
     const filtered = products.filter((p) => {
-      const haystack = `${p.model} ${p.generation ?? ""} ${p.color ?? ""} ${p.connectivity ?? ""}`.toLowerCase();
+      const haystack =
+        `${p.model} ${p.generation ?? ""} ${p.color ?? ""} ${p.connectivity ?? ""}`.toLowerCase();
       return (!q || haystack.includes(q)) && (!storage || p.storage === storage);
     });
     return filtered.sort((a, b) => {
@@ -52,7 +54,8 @@ function CataloguePage() {
   }, [products, search, storage, sort]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <AnimatedBackground />
       <SiteHeader />
       <main className="container-page py-12 md:py-16">
         <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Nos iPad</h1>

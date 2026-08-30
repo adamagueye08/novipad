@@ -32,7 +32,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/admin/produits")({
   head: () => ({
-    meta: [{ title: "Produits & stock — iPad Rythme" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Produits & stock — JokkoTech" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminProductsPage,
 });

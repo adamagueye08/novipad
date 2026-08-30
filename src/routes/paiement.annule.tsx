@@ -1,12 +1,13 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { XCircle } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { AnimatedBackground } from "@/components/site/AnimatedBackground";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/paiement/annule")({
   head: () => ({
-    meta: [{ title: "Paiement annulé — iPad Rythme" }],
+    meta: [{ title: "Paiement annulé — JokkoTech" }],
   }),
   validateSearch: (search: Record<string, unknown>) => ({
     ref: typeof search["ref"] === "string" ? (search["ref"] as string) : undefined,
@@ -19,7 +20,8 @@ function PaymentCancelPage() {
   const ref = search["ref"];
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col overflow-hidden">
+      <AnimatedBackground />
       <SiteHeader />
       <main className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center px-4 py-16 text-center">
         <XCircle className="size-14 text-muted-foreground" />

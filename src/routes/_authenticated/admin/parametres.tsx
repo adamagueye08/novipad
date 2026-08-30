@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/_authenticated/admin/parametres")({
   head: () => ({
-    meta: [{ title: "Paramètres — iPad Rythme" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Paramètres — JokkoTech" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminSettingsPage,
 });

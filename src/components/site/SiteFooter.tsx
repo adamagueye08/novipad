@@ -10,7 +10,7 @@ export function SiteFooter() {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground">
               <Tablet className="h-4.5 w-4.5" />
             </span>
-            <span className="font-display text-base font-semibold">iPad Rythme</span>
+            <span className="font-display text-base font-semibold">JokkoTech</span>
           </div>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
             iPad Apple importés des États-Unis, accessibles au comptant, par épargne Flex ou par
@@ -58,7 +58,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border/60 py-6">
         <p className="container-page text-xs text-muted-foreground">
-          © {new Date().getFullYear()} iPad Rythme. Tous droits réservés.
+          © {new Date().getFullYear()} JokkoTech. Tous droits réservés.
         </p>
       </div>
     </footer>

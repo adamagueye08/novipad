@@ -1,12 +1,13 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { AnimatedBackground } from "@/components/site/AnimatedBackground";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/paiement/succes")({
   head: () => ({
-    meta: [{ title: "Paiement en cours de confirmation — iPad Rythme" }],
+    meta: [{ title: "Paiement en cours de confirmation — JokkoTech" }],
   }),
   validateSearch: (search: Record<string, unknown>) => ({
     ref: typeof search["ref"] === "string" ? (search["ref"] as string) : undefined,
@@ -19,7 +20,8 @@ function PaymentSuccessPage() {
   const ref = search["ref"];
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col overflow-hidden">
+      <AnimatedBackground />
       <SiteHeader />
       <main className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center px-4 py-16 text-center">
         <CheckCircle2 className="size-14 text-primary" />

@@ -30,7 +30,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/admin/flex")({
   head: () => ({
-    meta: [{ title: "Flex — Annulations — iPad Rythme" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Flex — Annulations — JokkoTech" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminFlexPage,
 });

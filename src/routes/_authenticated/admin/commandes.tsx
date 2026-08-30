@@ -25,7 +25,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/admin/commandes")({
   head: () => ({
-    meta: [{ title: "Commandes — iPad Rythme" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Commandes — JokkoTech" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminOrdersPage,
 });
