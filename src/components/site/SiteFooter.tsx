@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Tablet, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import logo from "@/assets/jokkotech-logo.jpeg";
 
 export function SiteFooter() {
   return (
@@ -7,10 +8,7 @@ export function SiteFooter() {
       <div className="container-page grid gap-10 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground">
-              <Tablet className="h-4.5 w-4.5" />
-            </span>
-            <span className="font-display text-base font-semibold">JokkoTech</span>
+            <img src={logo} alt="JokkoTech" className="h-8 w-auto mix-blend-multiply" />
           </div>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
             iPad Apple importés des États-Unis, accessibles au comptant, par épargne Flex ou par

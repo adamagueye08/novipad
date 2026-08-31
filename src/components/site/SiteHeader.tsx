@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, X, Tablet, LayoutDashboard } from "lucide-react";
+import { Menu, X, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import logo from "@/assets/jokkotech-logo.jpeg";
 
 const NAV = [
   { to: "/", label: "Accueil" },
@@ -19,10 +20,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-border/60 glass-soft">
       <div className="container-page flex h-16 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
-            <Tablet className="h-4.5 w-4.5" />
-          </span>
-          <span className="font-display text-base font-semibold tracking-tight">JokkoTech</span>
+          <img src={logo} alt="JokkoTech" className="h-9 w-auto mix-blend-multiply" />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">

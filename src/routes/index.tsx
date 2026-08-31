@@ -149,12 +149,13 @@ function Landing() {
               <Sparkles className="h-3.5 w-3.5" /> iPad Apple importés des États-Unis
             </span>
             <h1 className="mt-6 text-4xl font-bold leading-[1.05] sm:text-5xl md:text-6xl">
-              Votre iPad.
+              Votre iPad,
               <br />
-              <span className="text-gradient">Votre rythme.</span>
+              <span className="text-gradient">sans compromis.</span>
             </h1>
             <p className="mt-5 max-w-md text-base text-muted-foreground sm:text-lg">
-              Accédez à votre iPad Apple avec le paiement qui vous correspond.
+              Cash, Flex ou Tontine — choisissez comment payer. Livraison suivie, paiement sécurisé,
+              tout géré depuis votre espace.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild variant="hero" size="xl">
@@ -169,7 +170,7 @@ function Landing() {
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-3">
               {[
                 { k: "Garantie", v: "6 mois" },
-                { k: "Dépôt Flex", v: "dès 5 000" },
+                { k: "Dépôt Flex", v: "Libre" },
                 { k: "Paiement", v: "Wave · OM" },
               ].map((s) => (
                 <div key={s.k} className="glass rounded-2xl px-3 py-3">
@@ -182,14 +183,14 @@ function Landing() {
             </dl>
           </div>
 
-          <div className="relative flex justify-center">
+          <div className="relative flex justify-center [perspective:1200px]">
             <div className="absolute inset-0 -z-10 rounded-full bg-gradient-primary opacity-20 blur-3xl" />
             <img
               src={heroIpad}
               alt="iPad Apple argent vu de face et de dos"
               width={1200}
               height={1200}
-              className="w-[86%] max-w-md animate-float drop-shadow-2xl"
+              className="w-[86%] max-w-md animate-tilt drop-shadow-2xl [transform-style:preserve-3d]"
             />
           </div>
         </div>

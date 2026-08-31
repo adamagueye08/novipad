@@ -300,6 +300,22 @@
   }
 }
 
+@keyframes tilt-slow {
+  0%,
+  100% {
+    transform: rotateY(0deg) rotateX(0deg) translateY(0);
+  }
+  25% {
+    transform: rotateY(8deg) rotateX(2deg) translateY(-10px);
+  }
+  50% {
+    transform: rotateY(0deg) rotateX(0deg) translateY(-18px);
+  }
+  75% {
+    transform: rotateY(-8deg) rotateX(-2deg) translateY(-10px);
+  }
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;
@@ -313,6 +329,10 @@
 
 @utility animate-float {
   animation: float-slow 7s ease-in-out infinite;
+}
+
+@utility animate-tilt {
+  animation: tilt-slow 9s ease-in-out infinite;
 }
 
 @utility animate-rise {
