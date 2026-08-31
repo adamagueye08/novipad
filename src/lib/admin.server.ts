@@ -209,7 +209,7 @@ export async function decidePayment(input: {
 }
 
 const PRODUCT_ADMIN_FIELDS =
-  "id,slug,model,generation,storage,color,connectivity,condition,description,images,features,warranty_months,price_cash,price_flex,price_tontine,purchase_cost_usd,shipping_cost_usd,stock_quantity,low_stock_threshold,is_active,is_demo,created_at,updated_at";
+  "id,slug,model,category,generation,storage,color,connectivity,condition,description,images,features,specs,warranty_months,price_cash,price_flex,price_tontine,purchase_cost_usd,shipping_cost_usd,stock_quantity,low_stock_threshold,is_active,is_demo,created_at,updated_at";
 
 export async function listProductsAdmin() {
   const { data, error } = await supabaseAdmin
@@ -220,9 +220,12 @@ export async function listProductsAdmin() {
   return data ?? [];
 }
 
+type ProductSpec = { label: string; value: string };
+
 type ProductPatch = {
   model?: string | undefined;
   slug?: string | undefined;
+  category?: string | undefined;
   generation?: string | null | undefined;
   storage?: string | null | undefined;
   color?: string | null | undefined;
@@ -230,6 +233,7 @@ type ProductPatch = {
   condition?: string | null | undefined;
   description?: string | null | undefined;
   images?: string[] | undefined;
+  specs?: ProductSpec[] | undefined;
   warranty_months?: number | undefined;
   purchase_cost_usd?: number | undefined;
   shipping_cost_usd?: number | undefined;
@@ -241,7 +245,7 @@ type ProductPatch = {
   is_active?: boolean | undefined;
 };
 
-type NewProduct = ProductPatch & { model: string; slug: string };
+type NewProduct = ProductPatch & { model: string; slug: string; category: string };
 
 const PRICE_FIELDS = ["price_cash", "price_flex", "price_tontine"] as const;
 

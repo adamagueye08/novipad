@@ -94,6 +94,11 @@ export const adminProductsFn = createServerFn({ method: "GET" })
     return listProductsAdmin();
   });
 
+const productSpecSchema = z.object({
+  label: z.string().min(1).max(60),
+  value: z.string().min(1).max(120),
+});
+
 const productPatchSchema = z.object({
   model: z.string().min(1).max(120).optional(),
   slug: z
@@ -102,6 +107,7 @@ const productPatchSchema = z.object({
     .max(160)
     .regex(/^[a-z0-9-]+$/, "Slug: minuscules, chiffres et tirets uniquement.")
     .optional(),
+  category: z.string().min(1).max(60).optional(),
   generation: z.string().max(60).nullable().optional(),
   storage: z.string().max(60).nullable().optional(),
   color: z.string().max(60).nullable().optional(),
@@ -109,6 +115,7 @@ const productPatchSchema = z.object({
   condition: z.string().max(60).nullable().optional(),
   description: z.string().max(2000).nullable().optional(),
   images: z.array(z.string().url()).optional(),
+  specs: z.array(productSpecSchema).max(20).optional(),
   warranty_months: z.number().int().nonnegative().optional(),
   purchase_cost_usd: z.number().nonnegative().optional(),
   shipping_cost_usd: z.number().nonnegative().optional(),
@@ -132,6 +139,7 @@ export const adminCreateProductFn = createServerFn({ method: "POST" })
             .min(1)
             .max(160)
             .regex(/^[a-z0-9-]+$/, "Slug: minuscules, chiffres et tirets uniquement."),
+          category: z.string().min(1).max(60),
         }),
       })
       .parse(data),

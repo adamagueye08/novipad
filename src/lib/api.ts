@@ -5,6 +5,7 @@ export type Product = {
   id: string;
   slug: string;
   model: string;
+  category: string;
   generation: string | null;
   storage: string | null;
   color: string | null;
@@ -13,6 +14,7 @@ export type Product = {
   warranty_months: number;
   description: string | null;
   features: unknown;
+  specs: unknown;
   images: string[];
   price_cash: number;
   price_tontine: number;
@@ -23,7 +25,7 @@ export type Product = {
 };
 
 const PRODUCT_COLUMNS =
-  "id,slug,model,generation,storage,color,connectivity,condition,warranty_months,description,features,images,price_cash,price_tontine,price_flex,stock_quantity,is_active,is_demo";
+  "id,slug,model,category,generation,storage,color,connectivity,condition,warranty_months,description,features,specs,images,price_cash,price_tontine,price_flex,stock_quantity,is_active,is_demo";
 
 export const productsQuery = () =>
   queryOptions({

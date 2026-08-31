@@ -594,6 +594,7 @@ export type Database = {
       }
       products: {
         Row: {
+          category: string
           color: string | null
           condition: string | null
           connectivity: string | null
@@ -613,12 +614,14 @@ export type Database = {
           purchase_cost_usd: number
           shipping_cost_usd: number
           slug: string
+          specs: Json
           stock_quantity: number
           storage: string | null
           updated_at: string
           warranty_months: number
         }
         Insert: {
+          category?: string
           color?: string | null
           condition?: string | null
           connectivity?: string | null
@@ -638,12 +641,14 @@ export type Database = {
           purchase_cost_usd?: number
           shipping_cost_usd?: number
           slug: string
+          specs?: Json
           stock_quantity?: number
           storage?: string | null
           updated_at?: string
           warranty_months?: number
         }
         Update: {
+          category?: string
           color?: string | null
           condition?: string | null
           connectivity?: string | null
@@ -663,6 +668,7 @@ export type Database = {
           purchase_cost_usd?: number
           shipping_cost_usd?: number
           slug?: string
+          specs?: Json
           stock_quantity?: number
           storage?: string | null
           updated_at?: string

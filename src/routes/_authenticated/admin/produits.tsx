@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Boxes, Pencil, Plus } from "lucide-react";
+import { Boxes, Pencil, Plus, X } from "lucide-react";
 import { adminProductsFn, adminCreateProductFn, adminUpdateProductFn } from "@/lib/admin.functions";
 import { ImageUploader } from "@/components/ImageUploader";
 import { formatFcfa } from "@/lib/format";
@@ -41,6 +41,7 @@ type ProductRow = {
   id: string;
   slug: string;
   model: string;
+  category: string;
   generation: string | null;
   storage: string | null;
   color: string | null;
@@ -48,6 +49,7 @@ type ProductRow = {
   condition: string | null;
   description: string | null;
   images: string[];
+  specs: { label: string; value: string }[];
   warranty_months: number;
   purchase_cost_usd: number;
   shipping_cost_usd: number;
@@ -63,6 +65,7 @@ type ProductRow = {
 type FormState = {
   model: string;
   slug: string;
+  category: string;
   generation: string;
   storage: string;
   color: string;
@@ -70,6 +73,7 @@ type FormState = {
   condition: string;
   description: string;
   images: string[];
+  specs: { label: string; value: string }[];
   warranty_months: string;
   purchase_cost_usd: string;
   shipping_cost_usd: string;
@@ -84,6 +88,7 @@ type FormState = {
 const EMPTY_FORM: FormState = {
   model: "",
   slug: "",
+  category: "iPad",
   generation: "",
   storage: "",
   color: "",
@@ -91,6 +96,7 @@ const EMPTY_FORM: FormState = {
   condition: "Neuf",
   description: "",
   images: [],
+  specs: [],
   warranty_months: "12",
   purchase_cost_usd: "0",
   shipping_cost_usd: "0",
@@ -106,6 +112,7 @@ function productToForm(p: ProductRow): FormState {
   return {
     model: p.model,
     slug: p.slug,
+    category: p.category || "iPad",
     generation: p.generation ?? "",
     storage: p.storage ?? "",
     color: p.color ?? "",
@@ -113,6 +120,7 @@ function productToForm(p: ProductRow): FormState {
     condition: p.condition ?? "",
     description: p.description ?? "",
     images: p.images ?? [],
+    specs: Array.isArray(p.specs) ? p.specs : [],
     warranty_months: String(p.warranty_months ?? 0),
     purchase_cost_usd: String(p.purchase_cost_usd ?? 0),
     shipping_cost_usd: String(p.shipping_cost_usd ?? 0),
@@ -138,6 +146,7 @@ function buildPayload(form: FormState) {
   return {
     model: form.model.trim(),
     slug: form.slug.trim() || slugify(form.model),
+    category: form.category.trim() || "Autre",
     generation: form.generation.trim() || null,
     storage: form.storage.trim() || null,
     color: form.color.trim() || null,
@@ -145,6 +154,7 @@ function buildPayload(form: FormState) {
     condition: form.condition.trim() || null,
     description: form.description.trim() || null,
     images: form.images,
+    specs: form.specs.filter((s) => s.label.trim() && s.value.trim()),
     warranty_months: Number(form.warranty_months) || 0,
     purchase_cost_usd: Number(form.purchase_cost_usd) || 0,
     shipping_cost_usd: Number(form.shipping_cost_usd) || 0,
@@ -157,6 +167,58 @@ function buildPayload(form: FormState) {
   };
 }
 
+function SpecsEditor({
+  specs,
+  onChange,
+}: {
+  specs: { label: string; value: string }[];
+  onChange: (specs: { label: string; value: string }[]) => void;
+}) {
+  function updateRow(i: number, patch: Partial<{ label: string; value: string }>) {
+    onChange(specs.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  }
+  function removeRow(i: number) {
+    onChange(specs.filter((_, idx) => idx !== i));
+  }
+  function addRow() {
+    onChange([...specs, { label: "", value: "" }]);
+  }
+
+  return (
+    <div className="sm:col-span-2">
+      <Label>Caractéristiques</Label>
+      <p className="mb-2 text-xs text-muted-foreground">
+        Libre, pour n'importe quel type de produit — ex. « RAM » / « 16 Go », « Taille d'écran » / «
+        55 pouces ».
+      </p>
+      <div className="space-y-2">
+        {specs.map((s, i) => (
+          <div key={i} className="flex gap-2">
+            <Input
+              value={s.label}
+              onChange={(e) => updateRow(i, { label: e.target.value })}
+              placeholder="Caractéristique (ex. RAM)"
+              className="flex-1"
+            />
+            <Input
+              value={s.value}
+              onChange={(e) => updateRow(i, { value: e.target.value })}
+              placeholder="Valeur (ex. 16 Go)"
+              className="flex-1"
+            />
+            <Button type="button" variant="outline" size="icon" onClick={() => removeRow(i)}>
+              <X className="size-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <Button type="button" variant="outline" size="sm" className="mt-2" onClick={addRow}>
+        <Plus className="mr-1 size-3.5" /> Ajouter une caractéristique
+      </Button>
+    </div>
+  );
+}
+
 function ProductForm({
   form,
   onChange,
@@ -167,7 +229,7 @@ function ProductForm({
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div>
-        <Label htmlFor="model">Modèle *</Label>
+        <Label htmlFor="model">Nom du produit *</Label>
         <Input
           id="model"
           value={form.model}
@@ -175,7 +237,7 @@ function ProductForm({
             const model = e.target.value;
             onChange({ model, slug: form.slug ? form.slug : slugify(model) });
           }}
-          placeholder="iPad 11e génération"
+          placeholder="iPad 11e génération, PC portable HP 15, Téléviseur Samsung 55..."
         />
       </div>
       <div>
@@ -187,38 +249,69 @@ function ProductForm({
           placeholder="ipad-11e-generation"
         />
       </div>
-      <div>
-        <Label htmlFor="generation">Génération</Label>
+
+      <div className="sm:col-span-2">
+        <Label htmlFor="category">Type de produit *</Label>
         <Input
-          id="generation"
-          value={form.generation}
-          onChange={(e) => onChange({ generation: e.target.value })}
+          id="category"
+          list="category-suggestions"
+          value={form.category}
+          onChange={(e) => onChange({ category: e.target.value })}
+          placeholder="iPad, Ordinateur, Télévision, Smartphone…"
         />
+        <datalist id="category-suggestions">
+          <option value="iPad" />
+          <option value="Ordinateur" />
+          <option value="Télévision" />
+          <option value="Smartphone" />
+          <option value="Accessoire" />
+          <option value="Autre" />
+        </datalist>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Libre — utilisé pour filtrer le catalogue par type de produit.
+        </p>
       </div>
-      <div>
-        <Label htmlFor="storage">Stockage</Label>
-        <Input
-          id="storage"
-          value={form.storage}
-          onChange={(e) => onChange({ storage: e.target.value })}
-          placeholder="128 Go"
-        />
+
+      <div className="rounded-xl border border-dashed border-border/60 p-3 sm:col-span-2">
+        <p className="mb-2 text-xs font-medium text-muted-foreground">
+          Champs spécifiques iPad — optionnels, laisse vide pour un autre type de produit
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="generation">Génération</Label>
+            <Input
+              id="generation"
+              value={form.generation}
+              onChange={(e) => onChange({ generation: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="storage">Stockage</Label>
+            <Input
+              id="storage"
+              value={form.storage}
+              onChange={(e) => onChange({ storage: e.target.value })}
+              placeholder="128 Go"
+            />
+          </div>
+          <div>
+            <Label htmlFor="connectivity">Connectivité</Label>
+            <Input
+              id="connectivity"
+              value={form.connectivity}
+              onChange={(e) => onChange({ connectivity: e.target.value })}
+              placeholder="Wi-Fi ou Wi-Fi + Cellular"
+            />
+          </div>
+        </div>
       </div>
+
       <div>
         <Label htmlFor="color">Couleur</Label>
         <Input
           id="color"
           value={form.color}
           onChange={(e) => onChange({ color: e.target.value })}
-        />
-      </div>
-      <div>
-        <Label htmlFor="connectivity">Connectivité</Label>
-        <Input
-          id="connectivity"
-          value={form.connectivity}
-          onChange={(e) => onChange({ connectivity: e.target.value })}
-          placeholder="Wi-Fi ou Wi-Fi + Cellular"
         />
       </div>
       <div>
@@ -250,6 +343,8 @@ function ProductForm({
           onChange={(e) => onChange({ description: e.target.value })}
         />
       </div>
+
+      <SpecsEditor specs={form.specs} onChange={(specs) => onChange({ specs })} />
 
       <ImageUploader images={form.images} onChange={(images) => onChange({ images })} />
 
@@ -364,7 +459,7 @@ function AdminProductsPage() {
   const [editForm, setEditForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
-  const products = (data ?? []) as ProductRow[];
+  const products = (data ?? []) as unknown as ProductRow[];
 
   async function onCreate() {
     if (!createForm.model.trim()) {
@@ -454,6 +549,7 @@ function AdminProductsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Modèle</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Cash</TableHead>
               <TableHead>Flex</TableHead>
               <TableHead>Tontine</TableHead>
@@ -465,14 +561,14 @@ function AdminProductsPage() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   Chargement…
                 </TableCell>
               </TableRow>
             ) : products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  Aucun produit. Ajoute le premier iPad.
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                  Aucun produit. Ajoute ton premier produit, quel que soit son type.
                 </TableCell>
               </TableRow>
             ) : (
@@ -483,6 +579,9 @@ function AdminProductsPage() {
                     <div className="text-xs text-muted-foreground">
                       {[p.storage, p.color].filter(Boolean).join(" · ") || "—"}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{p.category || "—"}</Badge>
                   </TableCell>
                   <TableCell>{formatFcfa(p.price_cash)}</TableCell>
                   <TableCell>{formatFcfa(p.price_flex)}</TableCell>

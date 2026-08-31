@@ -32,6 +32,9 @@ function ProductPage() {
   const { data: product, isLoading } = useQuery(productQuery(slug));
 
   const features = Array.isArray(product?.features) ? (product?.features as string[]) : [];
+  const specs = Array.isArray(product?.specs)
+    ? (product?.specs as { label: string; value: string }[])
+    : [];
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
@@ -64,6 +67,9 @@ function ProductPage() {
             </div>
 
             <div>
+              <span className="mb-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                {product.category || "Produit"}
+              </span>
               <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
                 {product.model} {product.generation}
               </h1>
@@ -75,6 +81,17 @@ function ProductPage() {
 
               {product.description && (
                 <p className="mt-5 text-sm leading-relaxed">{product.description}</p>
+              )}
+
+              {specs.length > 0 && (
+                <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2 rounded-2xl bg-muted/40 p-4 text-sm sm:grid-cols-3">
+                  {specs.map((s, i) => (
+                    <div key={i}>
+                      <dt className="text-xs text-muted-foreground">{s.label}</dt>
+                      <dd className="font-medium">{s.value}</dd>
+                    </div>
+                  ))}
+                </dl>
               )}
 
               <div className="mt-7 grid gap-3 sm:grid-cols-3">

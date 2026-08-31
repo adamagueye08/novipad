@@ -30,6 +30,11 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
 
       <div className="flex flex-1 flex-col p-5">
+        {product.category && (
+          <span className="mb-1.5 w-fit rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
+            {product.category}
+          </span>
+        )}
         <h3 className="text-base font-semibold">
           {product.model} {product.generation}
         </h3>
