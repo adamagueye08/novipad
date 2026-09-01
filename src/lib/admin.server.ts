@@ -100,7 +100,7 @@ export async function listOrders() {
   const { data, error } = await supabaseAdmin
     .from("orders")
     .select(
-      "id,reference,status,formula,amount,created_at,user_id,products(model),profiles:user_id(first_name,last_name,phone),deliveries(id,status,address,phone)",
+      "id,reference,status,formula,amount,created_at,user_id,products(model),profiles:user_id(first_name,last_name,phone,email),deliveries(id,status,address,phone)",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -717,6 +717,36 @@ export async function deleteStory(input: { actorId: string; storyId: string }) {
     action: "story.delete",
     entityType: "stories",
     entityId: input.storyId,
+  });
+
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Message direct à un client (staff → client, via la table notifications)
+// ---------------------------------------------------------------------------
+
+export async function sendClientMessage(input: {
+  actorId: string;
+  userId: string;
+  title: string;
+  body: string;
+}) {
+  const { error } = await supabaseAdmin.from("notifications").insert({
+    user_id: input.userId,
+    title: input.title,
+    body: input.body,
+    channel: "IN_APP",
+    audience: "USER",
+  });
+  if (error) throw new Error(error.message);
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "message.send",
+    entityType: "notifications",
+    entityId: input.userId,
+    newValue: { title: input.title, body: input.body },
   });
 
   return { ok: true };

@@ -3,10 +3,21 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ShoppingBag, Truck } from "lucide-react";
-import { adminOrdersFn, adminUpdateOrderFn } from "@/lib/admin.functions";
+import { ShoppingBag, Truck, MessageCircle, Phone, Mail } from "lucide-react";
+import { adminOrdersFn, adminUpdateOrderFn, adminSendMessageFn } from "@/lib/admin.functions";
 import { formatFcfa, formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableHeader,
@@ -30,7 +41,12 @@ export const Route = createFileRoute("/_authenticated/admin/commandes")({
   component: AdminOrdersPage,
 });
 
-type Profile = { first_name: string | null; last_name: string | null; phone: string | null };
+type Profile = {
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  email: string | null;
+};
 type Delivery = { id: string; status: string; address: string; phone: string };
 
 type OrderRow = {
@@ -83,6 +99,83 @@ const STATUS_BADGE_VARIANT = (status: string) => {
 function clientName(p: Profile | null) {
   const full = [p?.first_name, p?.last_name].filter(Boolean).join(" ").trim();
   return full || "Client";
+}
+
+function ContactClientDialog({
+  userId,
+  name,
+  onSent,
+}: {
+  userId: string;
+  name: string;
+  onSent: () => void;
+}) {
+  const sendMessage = useServerFn(adminSendMessageFn);
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+
+  async function onSend() {
+    if (!title.trim() || !body.trim()) {
+      toast.error("Titre et message obligatoires.");
+      return;
+    }
+    setSending(true);
+    try {
+      await sendMessage({ data: { userId, title: title.trim(), body: body.trim() } });
+      toast.success("Message envoyé.");
+      setOpen(false);
+      setTitle("");
+      setBody("");
+      onSent();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <MessageCircle className="mr-1 size-3.5" /> Contacter
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Message à {name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Objet (ex. À propos de votre commande)"
+            maxLength={120}
+          />
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Votre message…"
+            rows={4}
+            maxLength={1000}
+          />
+          <p className="text-xs text-muted-foreground">
+            Le client verra ce message dans l'espace "Messages" de son compte.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Annuler
+          </Button>
+          <Button onClick={onSend} disabled={sending}>
+            {sending ? "Envoi…" : "Envoyer"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function AdminOrdersPage() {
@@ -148,37 +241,61 @@ function AdminOrdersPage() {
             <TableRow>
               <TableHead>Référence</TableHead>
               <TableHead>Client</TableHead>
+              <TableHead>Contact</TableHead>
               <TableHead>Produit</TableHead>
               <TableHead>Formule</TableHead>
               <TableHead>Montant</TableHead>
               <TableHead>Livraison</TableHead>
               <TableHead>Statut</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   Chargement…
                 </TableCell>
               </TableRow>
             ) : orders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   Aucune commande.
                 </TableCell>
               </TableRow>
             ) : (
               orders.map((o) => {
                 const delivery = o.deliveries[0];
+                const name = clientName(o.profiles);
                 return (
                   <TableRow key={o.id}>
                     <TableCell className="font-mono text-xs">{o.reference}</TableCell>
                     <TableCell>
-                      <div className="font-medium">{clientName(o.profiles)}</div>
+                      <div className="font-medium">{name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {o.profiles?.phone ?? "—"} · {formatDate(o.created_at)}
+                        {formatDate(o.created_at)}
                       </div>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {o.profiles?.phone && (
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="size-3.5 text-muted-foreground" />
+                          <a href={`tel:${o.profiles.phone}`} className="hover:underline">
+                            {o.profiles.phone}
+                          </a>
+                        </div>
+                      )}
+                      {o.profiles?.email && (
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <Mail className="size-3.5 text-muted-foreground" />
+                          <a href={`mailto:${o.profiles.email}`} className="hover:underline">
+                            {o.profiles.email}
+                          </a>
+                        </div>
+                      )}
+                      {!o.profiles?.phone && !o.profiles?.email && (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>{o.products?.model ?? "iPad"}</TableCell>
                     <TableCell>
@@ -221,6 +338,13 @@ function AdminOrdersPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <ContactClientDialog
+                        userId={o.user_id}
+                        name={name}
+                        onSent={() => queryClient.invalidateQueries({ queryKey: ["admin-orders"] })}
+                      />
                     </TableCell>
                   </TableRow>
                 );

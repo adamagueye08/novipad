@@ -106,6 +106,26 @@ function DashboardPage() {
     },
   });
 
+  const messages = useQuery({
+    queryKey: ["my-notifications", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id,title,body,created_at,read_at")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const unreadCount = (messages.data ?? []).filter((m) => !m.read_at).length;
+
+  async function markMessageRead(id: string) {
+    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
+    messages.refetch();
+  }
+
   const flex = useQuery({
     queryKey: ["my-flex", userId],
     enabled: !!userId,
@@ -225,6 +245,39 @@ function DashboardPage() {
         </section>
 
         <section className="mt-10 grid gap-6 lg:grid-cols-2">
+          <Panel
+            title={`Messages${unreadCount > 0 ? ` (${unreadCount} non lu${unreadCount > 1 ? "s" : ""})` : ""}`}
+          >
+            {(messages.data?.length ?? 0) === 0 ? (
+              <Empty text="Aucun message pour le moment." />
+            ) : (
+              <ul className="space-y-3">
+                {messages.data!.map((m) => (
+                  <li
+                    key={m.id}
+                    onClick={() => !m.read_at && markMessageRead(m.id)}
+                    className={`cursor-pointer rounded-2xl border p-3 transition ${
+                      m.read_at
+                        ? "border-border/60 bg-transparent"
+                        : "border-primary/40 bg-primary/5"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium">{m.title}</p>
+                      {!m.read_at && (
+                        <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
+                      )}
+                    </div>
+                    {m.body && <p className="mt-1 text-xs text-muted-foreground">{m.body}</p>}
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                      {formatDate(m.created_at)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+
           <Panel title="Mes commandes">
             {(orders.data?.length ?? 0) === 0 ? (
               <Empty
@@ -441,13 +494,15 @@ function Panel({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Empty({ text, cta }: { text: string; cta: ReactNode }) {
+function Empty({ text, cta }: { text: string; cta?: ReactNode }) {
   return (
     <div className="rounded-2xl border border-dashed border-border/70 p-6 text-center">
       <p className="text-sm text-muted-foreground">{text}</p>
-      <div className="mt-3 text-sm font-medium text-primary underline-offset-4 hover:underline">
-        {cta}
-      </div>
+      {cta && (
+        <div className="mt-3 text-sm font-medium text-primary underline-offset-4 hover:underline">
+          {cta}
+        </div>
+      )}
     </div>
   );
 }

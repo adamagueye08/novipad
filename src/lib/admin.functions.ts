@@ -351,3 +351,20 @@ export const adminDeleteStoryFn = createServerFn({ method: "POST" })
     await ensureStaff(context.supabase, context.userId);
     return deleteStory({ ...data, actorId: context.userId });
   });
+
+export const adminSendMessageFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        title: z.string().min(1).max(120),
+        body: z.string().min(1).max(1000),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, sendClientMessage } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return sendClientMessage({ ...data, actorId: context.userId });
+  });
