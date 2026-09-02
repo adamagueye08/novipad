@@ -368,3 +368,63 @@ export const adminSendMessageFn = createServerFn({ method: "POST" })
     await ensureStaff(context.supabase, context.userId);
     return sendClientMessage({ ...data, actorId: context.userId });
   });
+
+// --- LIVREURS ---------------------------------------------------------
+
+export const adminCouriersFn = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { ensureStaff, listCouriers } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return listCouriers();
+  });
+
+const courierInputSchema = z.object({
+  fullName: z.string().min(2).max(120),
+  phone: z.string().min(6).max(30),
+  vehicle: z.string().max(60).optional(),
+  zone: z.string().max(120).optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export const adminCreateCourierFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => courierInputSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, createCourier } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return createCourier({ ...data, actorId: context.userId });
+  });
+
+export const adminUpdateCourierFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    courierInputSchema.extend({ courierId: z.string().uuid(), isActive: z.boolean() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, updateCourier } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return updateCourier({ ...data, actorId: context.userId });
+  });
+
+export const adminDeleteCourierFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ courierId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, deleteCourier } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return deleteCourier({ ...data, actorId: context.userId });
+  });
+
+export const adminAssignCourierFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ deliveryId: z.string().uuid(), courierId: z.string().uuid().nullable() })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { ensureStaff, assignCourier } = await import("@/lib/admin.server");
+    await ensureStaff(context.supabase, context.userId);
+    return assignCourier({ ...data, actorId: context.userId });
+  });

@@ -273,6 +273,54 @@ spécialisés plutôt que tout réimplémenter soi-même.
 3. Une fois approuvé, chaque cotisation suit le même schéma
    paiement→webhook que Flex
 
+### 5.4 Mise en relation client-livreur (`assignCourier`)
+
+**Le choix de conception** : pas d'auto-inscription livreur pour l'instant
+— un livreur est une simple fiche (nom, téléphone, véhicule, zone) créée
+par l'équipe interne depuis `/admin/livreurs`, pas un compte avec
+connexion. C'est délibérément le plus simple qui fonctionne : on ajoutera
+un vrai compte livreur (avec son propre espace pour mettre à jour le
+statut) seulement si le volume de commandes le justifie un jour.
+
+1. L'équipe crée les fiches livreurs une fois (`/admin/livreurs`,
+   `createCourier`/`updateCourier` dans `admin.server.ts`)
+2. Depuis `/admin/commandes`, chaque ligne "Livraison" a désormais un
+   sélecteur : assigner (ou retirer) un livreur à cette livraison
+   (`assignCourier`)
+3. Assigner un livreur fait automatiquement passer la livraison à
+   `OUT_FOR_DELIVERY` (si elle était encore à `PENDING`/`PREPARING`), et
+   crée une notification pour le client avec le nom et le téléphone du
+   livreur — le même mécanisme `notifications` que pour les messages
+   admin→client (section 7.5)
+4. Le client voit le livreur assigné directement dans « Mes commandes »
+   (dashboard) et peut suivre le détail sur une page dédiée
+   `/livraison/$orderId` : timeline de statut, coordonnées du livreur avec
+   bouton d'appel direct (`tel:`), adresse de livraison
+
+**Sécurité (RLS) — le point le plus important de cette fonctionnalité** :
+un client ne doit voir QUE le livreur assigné à SES propres livraisons,
+jamais l'annuaire complet. Contrairement aux autres tables où RLS compare
+`auth.uid()` à une colonne `user_id` de la même ligne, ici la policy sur
+`couriers` doit vérifier une relation indirecte (est-ce que CE livreur est
+référencé par UNE livraison qui M'appartient ?) :
+
+```sql
+CREATE POLICY "couriers_client_select_assigned" ON public.couriers
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.deliveries d
+      WHERE d.courier_id = couriers.id AND d.user_id = auth.uid()
+    )
+  );
+```
+
+📍 **À lire** : `supabase/migrations/20260902090000_couriers_and_delivery_assignment.sql`
+(schéma complet + policies), `src/lib/admin.server.ts` (`listCouriers`,
+`createCourier`, `updateCourier`, `deleteCourier`, `assignCourier`),
+`src/routes/_authenticated/admin/livreurs.tsx` (CRUD admin),
+`src/routes/_authenticated/livraison.$orderId.tsx` (page client)
+
 ---
 
 ## 7. Explication détaillée, fichier par fichier
@@ -499,7 +547,8 @@ blocs** :
 | `produits.tsx` | CRUD complet des iPad (créer/modifier/désactiver), historique des prix |
 | `tontines.tsx` | Demandes d'adhésion (approuver/refuser) + vue d'ensemble par tontine |
 | `flex.tsx` | Demandes d'annulation Flex (approuver/refuser/marquer remboursé) |
-| `commandes.tsx` | Liste des commandes toutes formules confondues, changement de statut |
+| `commandes.tsx` | Liste des commandes toutes formules confondues, changement de statut, assignation d'un livreur à chaque livraison |
+| `livreurs.tsx` | CRUD des fiches livreurs (nom, téléphone, véhicule, zone, actif/inactif) — voir section 5.4 |
 | `paiements.tsx` | Liste des paiements, réconciliation manuelle en filet de sécurité |
 | `utilisateurs.tsx` | Liste clients + équipe, changement de rôle, suspension |
 

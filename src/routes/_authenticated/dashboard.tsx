@@ -99,7 +99,9 @@ function DashboardPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id,reference,formula,amount,status,created_at,products(model,storage)")
+        .select(
+          "id,reference,formula,amount,status,created_at,products(model,storage),deliveries(id,status,courier_id,couriers(full_name,phone,vehicle))",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -286,24 +288,53 @@ function DashboardPage() {
               />
             ) : (
               <ul className="divide-y divide-border/60">
-                {orders.data!.map((o: any) => (
-                  <li key={o.id} className="flex items-center justify-between gap-3 py-3">
-                    <div>
-                      <p className="text-sm font-medium">
-                        {o.products?.model ?? "iPad"} {o.products?.storage ?? ""}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {o.reference} · {formatDate(o.created_at)} · {o.formula}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold">{formatFcfa(o.amount)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {ORDER_STATUS_LABELS[o.status] ?? o.status}
-                      </p>
-                    </div>
-                  </li>
-                ))}
+                {orders.data!.map((o: any) => {
+                  const delivery = o.deliveries?.[0];
+                  const courier = delivery?.couriers;
+                  return (
+                    <li key={o.id} className="space-y-2 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium">
+                            {o.products?.model ?? "iPad"} {o.products?.storage ?? ""}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {o.reference} · {formatDate(o.created_at)} · {o.formula}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold">{formatFcfa(o.amount)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {ORDER_STATUS_LABELS[o.status] ?? o.status}
+                          </p>
+                        </div>
+                      </div>
+                      {delivery && (
+                        <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/40 px-3 py-2">
+                          <p className="text-xs text-muted-foreground">
+                            {courier ? (
+                              <>
+                                Livreur :{" "}
+                                <span className="font-medium text-foreground">
+                                  {courier.full_name}
+                                </span>
+                              </>
+                            ) : (
+                              "Livreur pas encore assigné"
+                            )}
+                          </p>
+                          <Link
+                            to="/livraison/$orderId"
+                            params={{ orderId: o.id }}
+                            className="text-xs font-medium text-primary hover:underline"
+                          >
+                            Suivre la livraison
+                          </Link>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Panel>

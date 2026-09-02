@@ -13,23 +13,25 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FormulesRouteImport } from './routes/formules'
+import { Route as PaiementSuccesRouteImport } from './routes/paiement.succes'
+import { Route as PaiementAnnuleRouteImport } from './routes/paiement.annule'
 import { Route as TontinesRouteImport } from './routes/tontines'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as CatalogueIndexRouteImport } from './routes/catalogue.index'
 import { Route as CatalogueSlugRouteImport } from './routes/catalogue.$slug'
-import { Route as PaiementAnnuleRouteImport } from './routes/paiement.annule'
-import { Route as PaiementSuccesRouteImport } from './routes/paiement.succes'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
-import { Route as AuthenticatedAdminCommandesRouteImport } from './routes/_authenticated/admin/commandes'
-import { Route as AuthenticatedAdminFlexRouteImport } from './routes/_authenticated/admin/flex'
-import { Route as AuthenticatedAdminPaiementsRouteImport } from './routes/_authenticated/admin/paiements'
-import { Route as AuthenticatedAdminParametresRouteImport } from './routes/_authenticated/admin/parametres'
 import { Route as AuthenticatedAdminProduitsRouteImport } from './routes/_authenticated/admin/produits'
-import { Route as AuthenticatedAdminStoriesRouteImport } from './routes/_authenticated/admin/stories'
 import { Route as AuthenticatedAdminTontinesRouteImport } from './routes/_authenticated/admin/tontines'
+import { Route as AuthenticatedAdminFlexRouteImport } from './routes/_authenticated/admin/flex'
+import { Route as AuthenticatedAdminCommandesRouteImport } from './routes/_authenticated/admin/commandes'
+import { Route as AuthenticatedAdminPaiementsRouteImport } from './routes/_authenticated/admin/paiements'
 import { Route as AuthenticatedAdminUtilisateursRouteImport } from './routes/_authenticated/admin/utilisateurs'
+import { Route as AuthenticatedAdminParametresRouteImport } from './routes/_authenticated/admin/parametres'
+import { Route as AuthenticatedAdminStoriesRouteImport } from './routes/_authenticated/admin/stories'
+import { Route as AuthenticatedAdminLivreursRouteImport } from './routes/_authenticated/admin/livreurs'
 import { Route as AuthenticatedCommanderSlugRouteImport } from './routes/_authenticated/commander.$slug'
+import { Route as AuthenticatedLivraisonOrderIdRouteImport } from './routes/_authenticated/livraison.$orderId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -48,6 +50,16 @@ const AuthRoute = AuthRouteImport.update({
 const FormulesRoute = FormulesRouteImport.update({
   id: '/formules',
   path: '/formules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementSuccesRoute = PaiementSuccesRouteImport.update({
+  id: '/paiement/succes',
+  path: '/paiement/succes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaiementAnnuleRoute = PaiementAnnuleRouteImport.update({
+  id: '/paiement/annule',
+  path: '/paiement/annule',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TontinesRoute = TontinesRouteImport.update({
@@ -75,54 +87,15 @@ const CatalogueSlugRoute = CatalogueSlugRouteImport.update({
   path: '/catalogue/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PaiementAnnuleRoute = PaiementAnnuleRouteImport.update({
-  id: '/paiement/annule',
-  path: '/paiement/annule',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PaiementSuccesRoute = PaiementSuccesRouteImport.update({
-  id: '/paiement/succes',
-  path: '/paiement/succes',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRouteRoute,
 } as any)
-const AuthenticatedAdminCommandesRoute =
-  AuthenticatedAdminCommandesRouteImport.update({
-    id: '/commandes',
-    path: '/commandes',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminFlexRoute = AuthenticatedAdminFlexRouteImport.update({
-  id: '/flex',
-  path: '/flex',
-  getParentRoute: () => AuthenticatedAdminRouteRoute,
-} as any)
-const AuthenticatedAdminPaiementsRoute =
-  AuthenticatedAdminPaiementsRouteImport.update({
-    id: '/paiements',
-    path: '/paiements',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminParametresRoute =
-  AuthenticatedAdminParametresRouteImport.update({
-    id: '/parametres',
-    path: '/parametres',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
 const AuthenticatedAdminProduitsRoute =
   AuthenticatedAdminProduitsRouteImport.update({
     id: '/produits',
     path: '/produits',
-    getParentRoute: () => AuthenticatedAdminRouteRoute,
-  } as any)
-const AuthenticatedAdminStoriesRoute =
-  AuthenticatedAdminStoriesRouteImport.update({
-    id: '/stories',
-    path: '/stories',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedAdminTontinesRoute =
@@ -131,10 +104,45 @@ const AuthenticatedAdminTontinesRoute =
     path: '/tontines',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminFlexRoute = AuthenticatedAdminFlexRouteImport.update({
+  id: '/flex',
+  path: '/flex',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminCommandesRoute =
+  AuthenticatedAdminCommandesRouteImport.update({
+    id: '/commandes',
+    path: '/commandes',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminPaiementsRoute =
+  AuthenticatedAdminPaiementsRouteImport.update({
+    id: '/paiements',
+    path: '/paiements',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedAdminUtilisateursRoute =
   AuthenticatedAdminUtilisateursRouteImport.update({
     id: '/utilisateurs',
     path: '/utilisateurs',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminParametresRoute =
+  AuthenticatedAdminParametresRouteImport.update({
+    id: '/parametres',
+    path: '/parametres',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminStoriesRoute =
+  AuthenticatedAdminStoriesRouteImport.update({
+    id: '/stories',
+    path: '/stories',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminLivreursRoute =
+  AuthenticatedAdminLivreursRouteImport.update({
+    id: '/livreurs',
+    path: '/livreurs',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
 const AuthenticatedCommanderSlugRoute =
@@ -143,49 +151,59 @@ const AuthenticatedCommanderSlugRoute =
     path: '/commander/$slug',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedLivraisonOrderIdRoute =
+  AuthenticatedLivraisonOrderIdRouteImport.update({
+    id: '/livraison/$orderId',
+    path: '/livraison/$orderId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/formules': typeof FormulesRoute
+  '/paiement/succes': typeof PaiementSuccesRoute
+  '/paiement/annule': typeof PaiementAnnuleRoute
   '/tontines': typeof TontinesRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
-  '/paiement/annule': typeof PaiementAnnuleRoute
-  '/paiement/succes': typeof PaiementSuccesRoute
   '/catalogue/': typeof CatalogueIndexRoute
-  '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
-  '/admin/flex': typeof AuthenticatedAdminFlexRoute
-  '/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
-  '/admin/parametres': typeof AuthenticatedAdminParametresRoute
-  '/admin/produits': typeof AuthenticatedAdminProduitsRoute
-  '/admin/stories': typeof AuthenticatedAdminStoriesRoute
-  '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
-  '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/commander/$slug': typeof AuthenticatedCommanderSlugRoute
+  '/livraison/$orderId': typeof AuthenticatedLivraisonOrderIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/produits': typeof AuthenticatedAdminProduitsRoute
+  '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
+  '/admin/flex': typeof AuthenticatedAdminFlexRoute
+  '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
+  '/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
+  '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
+  '/admin/parametres': typeof AuthenticatedAdminParametresRoute
+  '/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/admin/livreurs': typeof AuthenticatedAdminLivreursRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/formules': typeof FormulesRoute
+  '/paiement/succes': typeof PaiementSuccesRoute
+  '/paiement/annule': typeof PaiementAnnuleRoute
   '/tontines': typeof TontinesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
-  '/paiement/annule': typeof PaiementAnnuleRoute
-  '/paiement/succes': typeof PaiementSuccesRoute
   '/catalogue': typeof CatalogueIndexRoute
-  '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
-  '/admin/flex': typeof AuthenticatedAdminFlexRoute
-  '/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
-  '/admin/parametres': typeof AuthenticatedAdminParametresRoute
-  '/admin/produits': typeof AuthenticatedAdminProduitsRoute
-  '/admin/stories': typeof AuthenticatedAdminStoriesRoute
-  '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
-  '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/commander/$slug': typeof AuthenticatedCommanderSlugRoute
+  '/livraison/$orderId': typeof AuthenticatedLivraisonOrderIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/produits': typeof AuthenticatedAdminProduitsRoute
+  '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
+  '/admin/flex': typeof AuthenticatedAdminFlexRoute
+  '/admin/commandes': typeof AuthenticatedAdminCommandesRoute
+  '/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
+  '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
+  '/admin/parametres': typeof AuthenticatedAdminParametresRoute
+  '/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/admin/livreurs': typeof AuthenticatedAdminLivreursRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -193,23 +211,25 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/formules': typeof FormulesRoute
+  '/paiement/succes': typeof PaiementSuccesRoute
+  '/paiement/annule': typeof PaiementAnnuleRoute
   '/tontines': typeof TontinesRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/catalogue/$slug': typeof CatalogueSlugRoute
-  '/paiement/annule': typeof PaiementAnnuleRoute
-  '/paiement/succes': typeof PaiementSuccesRoute
   '/catalogue/': typeof CatalogueIndexRoute
-  '/_authenticated/admin/commandes': typeof AuthenticatedAdminCommandesRoute
-  '/_authenticated/admin/flex': typeof AuthenticatedAdminFlexRoute
-  '/_authenticated/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
-  '/_authenticated/admin/parametres': typeof AuthenticatedAdminParametresRoute
-  '/_authenticated/admin/produits': typeof AuthenticatedAdminProduitsRoute
-  '/_authenticated/admin/stories': typeof AuthenticatedAdminStoriesRoute
-  '/_authenticated/admin/tontines': typeof AuthenticatedAdminTontinesRoute
-  '/_authenticated/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/_authenticated/commander/$slug': typeof AuthenticatedCommanderSlugRoute
+  '/_authenticated/livraison/$orderId': typeof AuthenticatedLivraisonOrderIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/produits': typeof AuthenticatedAdminProduitsRoute
+  '/_authenticated/admin/tontines': typeof AuthenticatedAdminTontinesRoute
+  '/_authenticated/admin/flex': typeof AuthenticatedAdminFlexRoute
+  '/_authenticated/admin/commandes': typeof AuthenticatedAdminCommandesRoute
+  '/_authenticated/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
+  '/_authenticated/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
+  '/_authenticated/admin/parametres': typeof AuthenticatedAdminParametresRoute
+  '/_authenticated/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/_authenticated/admin/livreurs': typeof AuthenticatedAdminLivreursRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -217,67 +237,73 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/formules'
+    | '/paiement/succes'
+    | '/paiement/annule'
     | '/tontines'
     | '/admin'
     | '/dashboard'
     | '/catalogue/$slug'
-    | '/paiement/annule'
-    | '/paiement/succes'
     | '/catalogue/'
-    | '/admin/commandes'
-    | '/admin/flex'
-    | '/admin/paiements'
-    | '/admin/parametres'
-    | '/admin/produits'
-    | '/admin/stories'
-    | '/admin/tontines'
-    | '/admin/utilisateurs'
     | '/commander/$slug'
+    | '/livraison/$orderId'
     | '/admin/'
+    | '/admin/produits'
+    | '/admin/tontines'
+    | '/admin/flex'
+    | '/admin/commandes'
+    | '/admin/paiements'
+    | '/admin/utilisateurs'
+    | '/admin/parametres'
+    | '/admin/stories'
+    | '/admin/livreurs'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/formules'
+    | '/paiement/succes'
+    | '/paiement/annule'
     | '/tontines'
     | '/dashboard'
     | '/catalogue/$slug'
-    | '/paiement/annule'
-    | '/paiement/succes'
     | '/catalogue'
-    | '/admin/commandes'
-    | '/admin/flex'
-    | '/admin/paiements'
-    | '/admin/parametres'
-    | '/admin/produits'
-    | '/admin/stories'
-    | '/admin/tontines'
-    | '/admin/utilisateurs'
     | '/commander/$slug'
+    | '/livraison/$orderId'
     | '/admin'
+    | '/admin/produits'
+    | '/admin/tontines'
+    | '/admin/flex'
+    | '/admin/commandes'
+    | '/admin/paiements'
+    | '/admin/utilisateurs'
+    | '/admin/parametres'
+    | '/admin/stories'
+    | '/admin/livreurs'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/formules'
+    | '/paiement/succes'
+    | '/paiement/annule'
     | '/tontines'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/catalogue/$slug'
-    | '/paiement/annule'
-    | '/paiement/succes'
     | '/catalogue/'
-    | '/_authenticated/admin/commandes'
-    | '/_authenticated/admin/flex'
-    | '/_authenticated/admin/paiements'
-    | '/_authenticated/admin/parametres'
-    | '/_authenticated/admin/produits'
-    | '/_authenticated/admin/stories'
-    | '/_authenticated/admin/tontines'
-    | '/_authenticated/admin/utilisateurs'
     | '/_authenticated/commander/$slug'
+    | '/_authenticated/livraison/$orderId'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/produits'
+    | '/_authenticated/admin/tontines'
+    | '/_authenticated/admin/flex'
+    | '/_authenticated/admin/commandes'
+    | '/_authenticated/admin/paiements'
+    | '/_authenticated/admin/utilisateurs'
+    | '/_authenticated/admin/parametres'
+    | '/_authenticated/admin/stories'
+    | '/_authenticated/admin/livreurs'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -285,10 +311,10 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   FormulesRoute: typeof FormulesRoute
+  PaiementSuccesRoute: typeof PaiementSuccesRoute
+  PaiementAnnuleRoute: typeof PaiementAnnuleRoute
   TontinesRoute: typeof TontinesRoute
   CatalogueSlugRoute: typeof CatalogueSlugRoute
-  PaiementAnnuleRoute: typeof PaiementAnnuleRoute
-  PaiementSuccesRoute: typeof PaiementSuccesRoute
   CatalogueIndexRoute: typeof CatalogueIndexRoute
 }
 
@@ -320,6 +346,20 @@ declare module '@tanstack/react-router' {
       path: '/formules'
       fullPath: '/formules'
       preLoaderRoute: typeof FormulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiement/succes': {
+      id: '/paiement/succes'
+      path: '/paiement/succes'
+      fullPath: '/paiement/succes'
+      preLoaderRoute: typeof PaiementSuccesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paiement/annule': {
+      id: '/paiement/annule'
+      path: '/paiement/annule'
+      fullPath: '/paiement/annule'
+      preLoaderRoute: typeof PaiementAnnuleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tontines': {
@@ -357,53 +397,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CatalogueSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/paiement/annule': {
-      id: '/paiement/annule'
-      path: '/paiement/annule'
-      fullPath: '/paiement/annule'
-      preLoaderRoute: typeof PaiementAnnuleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/paiement/succes': {
-      id: '/paiement/succes'
-      path: '/paiement/succes'
-      fullPath: '/paiement/succes'
-      preLoaderRoute: typeof PaiementSuccesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/commandes': {
-      id: '/_authenticated/admin/commandes'
-      path: '/commandes'
-      fullPath: '/admin/commandes'
-      preLoaderRoute: typeof AuthenticatedAdminCommandesRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/flex': {
-      id: '/_authenticated/admin/flex'
-      path: '/flex'
-      fullPath: '/admin/flex'
-      preLoaderRoute: typeof AuthenticatedAdminFlexRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/paiements': {
-      id: '/_authenticated/admin/paiements'
-      path: '/paiements'
-      fullPath: '/admin/paiements'
-      preLoaderRoute: typeof AuthenticatedAdminPaiementsRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
-    '/_authenticated/admin/parametres': {
-      id: '/_authenticated/admin/parametres'
-      path: '/parametres'
-      fullPath: '/admin/parametres'
-      preLoaderRoute: typeof AuthenticatedAdminParametresRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/produits': {
@@ -413,18 +411,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminProduitsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
-    '/_authenticated/admin/stories': {
-      id: '/_authenticated/admin/stories'
-      path: '/stories'
-      fullPath: '/admin/stories'
-      preLoaderRoute: typeof AuthenticatedAdminStoriesRouteImport
-      parentRoute: typeof AuthenticatedAdminRouteRoute
-    }
     '/_authenticated/admin/tontines': {
       id: '/_authenticated/admin/tontines'
       path: '/tontines'
       fullPath: '/admin/tontines'
       preLoaderRoute: typeof AuthenticatedAdminTontinesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/livreurs': {
+      id: '/_authenticated/admin/livreurs'
+      path: '/livreurs'
+      fullPath: '/admin/livreurs'
+      preLoaderRoute: typeof AuthenticatedAdminLivreursRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/flex': {
+      id: '/_authenticated/admin/flex'
+      path: '/flex'
+      fullPath: '/admin/flex'
+      preLoaderRoute: typeof AuthenticatedAdminFlexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/commandes': {
+      id: '/_authenticated/admin/commandes'
+      path: '/commandes'
+      fullPath: '/admin/commandes'
+      preLoaderRoute: typeof AuthenticatedAdminCommandesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/paiements': {
+      id: '/_authenticated/admin/paiements'
+      path: '/paiements'
+      fullPath: '/admin/paiements'
+      preLoaderRoute: typeof AuthenticatedAdminPaiementsRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
     '/_authenticated/admin/utilisateurs': {
@@ -434,6 +453,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUtilisateursRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/parametres': {
+      id: '/_authenticated/admin/parametres'
+      path: '/parametres'
+      fullPath: '/admin/parametres'
+      preLoaderRoute: typeof AuthenticatedAdminParametresRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/stories': {
+      id: '/_authenticated/admin/stories'
+      path: '/stories'
+      fullPath: '/admin/stories'
+      preLoaderRoute: typeof AuthenticatedAdminStoriesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/commander/$slug': {
       id: '/_authenticated/commander/$slug'
       path: '/commander/$slug'
@@ -441,32 +474,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommanderSlugRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/livraison/$orderId': {
+      id: '/_authenticated/livraison/$orderId'
+      path: '/livraison/$orderId'
+      fullPath: '/livraison/$orderId'
+      preLoaderRoute: typeof AuthenticatedLivraisonOrderIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteRouteChildren {
-  AuthenticatedAdminCommandesRoute: typeof AuthenticatedAdminCommandesRoute
-  AuthenticatedAdminFlexRoute: typeof AuthenticatedAdminFlexRoute
-  AuthenticatedAdminPaiementsRoute: typeof AuthenticatedAdminPaiementsRoute
-  AuthenticatedAdminParametresRoute: typeof AuthenticatedAdminParametresRoute
-  AuthenticatedAdminProduitsRoute: typeof AuthenticatedAdminProduitsRoute
-  AuthenticatedAdminStoriesRoute: typeof AuthenticatedAdminStoriesRoute
-  AuthenticatedAdminTontinesRoute: typeof AuthenticatedAdminTontinesRoute
-  AuthenticatedAdminUtilisateursRoute: typeof AuthenticatedAdminUtilisateursRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminProduitsRoute: typeof AuthenticatedAdminProduitsRoute
+  AuthenticatedAdminTontinesRoute: typeof AuthenticatedAdminTontinesRoute
+  AuthenticatedAdminFlexRoute: typeof AuthenticatedAdminFlexRoute
+  AuthenticatedAdminCommandesRoute: typeof AuthenticatedAdminCommandesRoute
+  AuthenticatedAdminPaiementsRoute: typeof AuthenticatedAdminPaiementsRoute
+  AuthenticatedAdminUtilisateursRoute: typeof AuthenticatedAdminUtilisateursRoute
+  AuthenticatedAdminParametresRoute: typeof AuthenticatedAdminParametresRoute
+  AuthenticatedAdminStoriesRoute: typeof AuthenticatedAdminStoriesRoute
+  AuthenticatedAdminLivreursRoute: typeof AuthenticatedAdminLivreursRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
   {
-    AuthenticatedAdminCommandesRoute: AuthenticatedAdminCommandesRoute,
-    AuthenticatedAdminFlexRoute: AuthenticatedAdminFlexRoute,
-    AuthenticatedAdminPaiementsRoute: AuthenticatedAdminPaiementsRoute,
-    AuthenticatedAdminParametresRoute: AuthenticatedAdminParametresRoute,
-    AuthenticatedAdminProduitsRoute: AuthenticatedAdminProduitsRoute,
-    AuthenticatedAdminStoriesRoute: AuthenticatedAdminStoriesRoute,
-    AuthenticatedAdminTontinesRoute: AuthenticatedAdminTontinesRoute,
-    AuthenticatedAdminUtilisateursRoute: AuthenticatedAdminUtilisateursRoute,
     AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+    AuthenticatedAdminProduitsRoute: AuthenticatedAdminProduitsRoute,
+    AuthenticatedAdminTontinesRoute: AuthenticatedAdminTontinesRoute,
+    AuthenticatedAdminFlexRoute: AuthenticatedAdminFlexRoute,
+    AuthenticatedAdminCommandesRoute: AuthenticatedAdminCommandesRoute,
+    AuthenticatedAdminPaiementsRoute: AuthenticatedAdminPaiementsRoute,
+    AuthenticatedAdminUtilisateursRoute: AuthenticatedAdminUtilisateursRoute,
+    AuthenticatedAdminParametresRoute: AuthenticatedAdminParametresRoute,
+    AuthenticatedAdminStoriesRoute: AuthenticatedAdminStoriesRoute,
+    AuthenticatedAdminLivreursRoute: AuthenticatedAdminLivreursRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
@@ -478,12 +520,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedCommanderSlugRoute: typeof AuthenticatedCommanderSlugRoute
+  AuthenticatedLivraisonOrderIdRoute: typeof AuthenticatedLivraisonOrderIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedCommanderSlugRoute: AuthenticatedCommanderSlugRoute,
+  AuthenticatedLivraisonOrderIdRoute: AuthenticatedLivraisonOrderIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -494,10 +538,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   FormulesRoute: FormulesRoute,
+  PaiementSuccesRoute: PaiementSuccesRoute,
+  PaiementAnnuleRoute: PaiementAnnuleRoute,
   TontinesRoute: TontinesRoute,
   CatalogueSlugRoute: CatalogueSlugRoute,
-  PaiementAnnuleRoute: PaiementAnnuleRoute,
-  PaiementSuccesRoute: PaiementSuccesRoute,
   CatalogueIndexRoute: CatalogueIndexRoute,
 }
 export const routeTree = rootRouteImport

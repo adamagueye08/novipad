@@ -100,7 +100,7 @@ export async function listOrders() {
   const { data, error } = await supabaseAdmin
     .from("orders")
     .select(
-      "id,reference,status,formula,amount,created_at,user_id,products(model),profiles:user_id(first_name,last_name,phone,email),deliveries(id,status,address,phone)",
+      "id,reference,status,formula,amount,created_at,user_id,products(model),profiles:user_id(first_name,last_name,phone,email),deliveries(id,status,address,phone,courier_id,couriers(id,full_name,phone))",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -156,6 +156,158 @@ export async function updateOrderStatus(input: {
     entityId: input.orderId,
     oldValue: { status: before.status },
     newValue: { status: input.status },
+  });
+  return { ok: true };
+}
+
+// --- LIVREURS -------------------------------------------------------------
+// Les livreurs n'ont pas de compte (pas d'auto-inscription pour l'instant) :
+// ce sont de simples fiches créées par l'équipe interne, assignées ensuite à
+// une livraison. Voir supabase/migrations/20260902090000_couriers_and_delivery_assignment.sql
+// pour le schéma et la policy RLS qui n'expose un livreur au client QUE si
+// son id est celui assigné à une de ses propres livraisons.
+
+export async function listCouriers() {
+  const { data, error } = await supabaseAdmin
+    .from("couriers")
+    .select("id,full_name,phone,vehicle,zone,is_active,notes,created_at")
+    .order("full_name", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function createCourier(input: {
+  actorId: string;
+  fullName: string;
+  phone: string;
+  vehicle?: string | null | undefined;
+  zone?: string | null | undefined;
+  notes?: string | null | undefined;
+}) {
+  const { data, error } = await supabaseAdmin
+    .from("couriers")
+    .insert({
+      full_name: input.fullName,
+      phone: input.phone,
+      vehicle: input.vehicle || null,
+      zone: input.zone || null,
+      notes: input.notes || null,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "courier.create",
+    entityType: "couriers",
+    entityId: data.id,
+    newValue: { full_name: input.fullName, phone: input.phone },
+  });
+  return { ok: true, id: data.id };
+}
+
+export async function updateCourier(input: {
+  actorId: string;
+  courierId: string;
+  fullName: string;
+  phone: string;
+  vehicle?: string | null | undefined;
+  zone?: string | null | undefined;
+  notes?: string | null | undefined;
+  isActive: boolean;
+}) {
+  const { error } = await supabaseAdmin
+    .from("couriers")
+    .update({
+      full_name: input.fullName,
+      phone: input.phone,
+      vehicle: input.vehicle || null,
+      zone: input.zone || null,
+      notes: input.notes || null,
+      is_active: input.isActive,
+    })
+    .eq("id", input.courierId);
+  if (error) throw new Error(error.message);
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "courier.update",
+    entityType: "couriers",
+    entityId: input.courierId,
+    newValue: { full_name: input.fullName, is_active: input.isActive },
+  });
+  return { ok: true };
+}
+
+export async function deleteCourier(input: { actorId: string; courierId: string }) {
+  // On ne supprime jamais vraiment un livreur ayant déjà été assigné (il
+  // reste référencé par `deliveries.courier_id`, ON DELETE SET NULL) : une
+  // désactivation (`isActive: false`) est presque toujours préférable pour
+  // garder l'historique des livraisons passées lisible. La suppression est
+  // proposée pour les fiches créées par erreur.
+  const { error } = await supabaseAdmin.from("couriers").delete().eq("id", input.courierId);
+  if (error) throw new Error(error.message);
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "courier.delete",
+    entityType: "couriers",
+    entityId: input.courierId,
+  });
+  return { ok: true };
+}
+
+export async function assignCourier(input: {
+  actorId: string;
+  deliveryId: string;
+  courierId: string | null;
+}) {
+  const { data: delivery } = await supabaseAdmin
+    .from("deliveries")
+    .select("id,user_id,order_id,status")
+    .eq("id", input.deliveryId)
+    .maybeSingle();
+  if (!delivery) throw new Error("Livraison introuvable.");
+
+  const { error } = await supabaseAdmin
+    .from("deliveries")
+    .update({
+      courier_id: input.courierId,
+      courier_assigned_at: input.courierId ? new Date().toISOString() : null,
+      // Assigner un livreur fait passer la livraison "en route" si elle en
+      // était encore au statut par défaut ; on ne rétrograde jamais un
+      // statut plus avancé (ex: déjà DELIVERED) en réassignant.
+      ...(input.courierId && (delivery.status === "PENDING" || delivery.status === "PREPARING")
+        ? { status: "OUT_FOR_DELIVERY" as const }
+        : {}),
+    })
+    .eq("id", input.deliveryId);
+  if (error) throw new Error(error.message);
+
+  if (input.courierId) {
+    const { data: courier } = await supabaseAdmin
+      .from("couriers")
+      .select("full_name,phone")
+      .eq("id", input.courierId)
+      .maybeSingle();
+    await supabaseAdmin.from("notifications").insert({
+      user_id: delivery.user_id,
+      title: "Un livreur vous a été assigné",
+      body: courier
+        ? `${courier.full_name} (${courier.phone}) s'occupe de votre livraison. Vous pouvez le contacter directement.`
+        : "Un livreur a été assigné à votre commande.",
+      channel: "IN_APP",
+      audience: "USER",
+    });
+  }
+
+  await logAudit({
+    actorId: input.actorId,
+    action: "delivery.assign_courier",
+    entityType: "deliveries",
+    entityId: input.deliveryId,
+    newValue: { courier_id: input.courierId },
   });
   return { ok: true };
 }

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   BarChart3,
+  Bike,
   Boxes,
   Clapperboard,
   CreditCard,
@@ -40,6 +41,7 @@ const NAV = [
   { to: "/admin/produits", label: "Produits & stock", icon: Boxes, ready: true },
   { to: "/admin/stories", label: "Stories", icon: Clapperboard, ready: true },
   { to: "/admin/commandes", label: "Commandes", icon: ShoppingBag, ready: true },
+  { to: "/admin/livreurs", label: "Livreurs", icon: Bike, ready: true },
   { to: "/admin/paiements", label: "Paiements", icon: CreditCard, ready: true },
   { to: "/admin/flex", label: "Flex — Annulations", icon: Wallet, ready: true },
   { to: "/admin/tontines", label: "Tontines", icon: ShieldCheck, ready: true },
