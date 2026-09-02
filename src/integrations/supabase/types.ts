@@ -47,9 +47,47 @@ export type Database = {
         }
         Relationships: []
       }
+      couriers: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          phone: string
+          updated_at: string
+          vehicle: string | null
+          zone: string | null
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone: string
+          updated_at?: string
+          vehicle?: string | null
+          zone?: string | null
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string
+          updated_at?: string
+          vehicle?: string | null
+          zone?: string | null
+        }
+        Relationships: []
+      }
       deliveries: {
         Row: {
           address: string | null
+          courier_assigned_at: string | null
+          courier_id: string | null
           courier_name: string | null
           created_at: string
           id: string
@@ -63,6 +101,8 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          courier_assigned_at?: string | null
+          courier_id?: string | null
           courier_name?: string | null
           created_at?: string
           id?: string
@@ -76,6 +116,8 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          courier_assigned_at?: string | null
+          courier_id?: string | null
           courier_name?: string | null
           created_at?: string
           id?: string
@@ -93,6 +135,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deliveries_courier_id_fkey"
+            columns: ["courier_id"]
+            isOneToOne: false
+            referencedRelation: "couriers"
             referencedColumns: ["id"]
           },
         ]
