@@ -12,4 +12,13 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    server: {
+      // Autorise les tunnels ngrok en dev local (ex: test du webhook PayTech,
+      // qui doit pouvoir atteindre le serveur depuis l'extérieur — impossible
+      // avec localhost seul). Sans ça, Vite bloque toute requête dont l'en-tête
+      // Host n'est pas explicitement reconnu, y compris les appels de PayTech.
+      allowedHosts: [".ngrok-free.dev", ".ngrok-free.app", ".ngrok.io", ".ngrok.app"],
+    },
+  },
 });
