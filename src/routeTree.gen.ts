@@ -29,7 +29,9 @@ import { Route as AuthenticatedAdminPaiementsRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminUtilisateursRouteImport } from './routes/_authenticated/admin/utilisateurs'
 import { Route as AuthenticatedAdminParametresRouteImport } from './routes/_authenticated/admin/parametres'
 import { Route as AuthenticatedAdminStoriesRouteImport } from './routes/_authenticated/admin/stories'
+import { Route as AuthenticatedAdminLivreursRouteImport } from './routes/_authenticated/admin/livreurs'
 import { Route as AuthenticatedCommanderSlugRouteImport } from './routes/_authenticated/commander.$slug'
+import { Route as AuthenticatedLivraisonOrderIdRouteImport } from './routes/_authenticated/livraison.$orderId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -137,10 +139,22 @@ const AuthenticatedAdminStoriesRoute =
     path: '/stories',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const AuthenticatedAdminLivreursRoute =
+  AuthenticatedAdminLivreursRouteImport.update({
+    id: '/livreurs',
+    path: '/livreurs',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 const AuthenticatedCommanderSlugRoute =
   AuthenticatedCommanderSlugRouteImport.update({
     id: '/commander/$slug',
     path: '/commander/$slug',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedLivraisonOrderIdRoute =
+  AuthenticatedLivraisonOrderIdRouteImport.update({
+    id: '/livraison/$orderId',
+    path: '/livraison/$orderId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
@@ -156,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/catalogue/$slug': typeof CatalogueSlugRoute
   '/catalogue/': typeof CatalogueIndexRoute
   '/commander/$slug': typeof AuthenticatedCommanderSlugRoute
+  '/livraison/$orderId': typeof AuthenticatedLivraisonOrderIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/produits': typeof AuthenticatedAdminProduitsRoute
   '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
@@ -165,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/admin/livreurs': typeof AuthenticatedAdminLivreursRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -177,6 +193,7 @@ export interface FileRoutesByTo {
   '/catalogue/$slug': typeof CatalogueSlugRoute
   '/catalogue': typeof CatalogueIndexRoute
   '/commander/$slug': typeof AuthenticatedCommanderSlugRoute
+  '/livraison/$orderId': typeof AuthenticatedLivraisonOrderIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/produits': typeof AuthenticatedAdminProduitsRoute
   '/admin/tontines': typeof AuthenticatedAdminTontinesRoute
@@ -186,6 +203,7 @@ export interface FileRoutesByTo {
   '/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
   '/admin/parametres': typeof AuthenticatedAdminParametresRoute
   '/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/admin/livreurs': typeof AuthenticatedAdminLivreursRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -201,9 +219,17 @@ export interface FileRoutesById {
   '/catalogue/$slug': typeof CatalogueSlugRoute
   '/catalogue/': typeof CatalogueIndexRoute
   '/_authenticated/commander/$slug': typeof AuthenticatedCommanderSlugRoute
+  '/_authenticated/livraison/$orderId': typeof AuthenticatedLivraisonOrderIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/produits': typeof AuthenticatedAdminProduitsRoute
   '/_authenticated/admin/tontines': typeof AuthenticatedAdminTontinesRoute
+  '/_authenticated/admin/flex': typeof AuthenticatedAdminFlexRoute
+  '/_authenticated/admin/commandes': typeof AuthenticatedAdminCommandesRoute
+  '/_authenticated/admin/paiements': typeof AuthenticatedAdminPaiementsRoute
+  '/_authenticated/admin/utilisateurs': typeof AuthenticatedAdminUtilisateursRoute
+  '/_authenticated/admin/parametres': typeof AuthenticatedAdminParametresRoute
+  '/_authenticated/admin/stories': typeof AuthenticatedAdminStoriesRoute
+  '/_authenticated/admin/livreurs': typeof AuthenticatedAdminLivreursRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -219,6 +245,7 @@ export interface FileRouteTypes {
     | '/catalogue/$slug'
     | '/catalogue/'
     | '/commander/$slug'
+    | '/livraison/$orderId'
     | '/admin/'
     | '/admin/produits'
     | '/admin/tontines'
@@ -228,6 +255,7 @@ export interface FileRouteTypes {
     | '/admin/utilisateurs'
     | '/admin/parametres'
     | '/admin/stories'
+    | '/admin/livreurs'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -240,6 +268,7 @@ export interface FileRouteTypes {
     | '/catalogue/$slug'
     | '/catalogue'
     | '/commander/$slug'
+    | '/livraison/$orderId'
     | '/admin'
     | '/admin/produits'
     | '/admin/tontines'
@@ -249,6 +278,7 @@ export interface FileRouteTypes {
     | '/admin/utilisateurs'
     | '/admin/parametres'
     | '/admin/stories'
+    | '/admin/livreurs'
   id:
     | '__root__'
     | '/'
@@ -263,9 +293,17 @@ export interface FileRouteTypes {
     | '/catalogue/$slug'
     | '/catalogue/'
     | '/_authenticated/commander/$slug'
+    | '/_authenticated/livraison/$orderId'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/produits'
     | '/_authenticated/admin/tontines'
+    | '/_authenticated/admin/flex'
+    | '/_authenticated/admin/commandes'
+    | '/_authenticated/admin/paiements'
+    | '/_authenticated/admin/utilisateurs'
+    | '/_authenticated/admin/parametres'
+    | '/_authenticated/admin/stories'
+    | '/_authenticated/admin/livreurs'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -380,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminTontinesRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/_authenticated/admin/livreurs': {
+      id: '/_authenticated/admin/livreurs'
+      path: '/livreurs'
+      fullPath: '/admin/livreurs'
+      preLoaderRoute: typeof AuthenticatedAdminLivreursRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
     '/_authenticated/admin/flex': {
       id: '/_authenticated/admin/flex'
       path: '/flex'
@@ -429,6 +474,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommanderSlugRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/livraison/$orderId': {
+      id: '/_authenticated/livraison/$orderId'
+      path: '/livraison/$orderId'
+      fullPath: '/livraison/$orderId'
+      preLoaderRoute: typeof AuthenticatedLivraisonOrderIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -442,6 +494,7 @@ interface AuthenticatedAdminRouteRouteChildren {
   AuthenticatedAdminUtilisateursRoute: typeof AuthenticatedAdminUtilisateursRoute
   AuthenticatedAdminParametresRoute: typeof AuthenticatedAdminParametresRoute
   AuthenticatedAdminStoriesRoute: typeof AuthenticatedAdminStoriesRoute
+  AuthenticatedAdminLivreursRoute: typeof AuthenticatedAdminLivreursRoute
 }
 
 const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
@@ -455,6 +508,7 @@ const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren
     AuthenticatedAdminUtilisateursRoute: AuthenticatedAdminUtilisateursRoute,
     AuthenticatedAdminParametresRoute: AuthenticatedAdminParametresRoute,
     AuthenticatedAdminStoriesRoute: AuthenticatedAdminStoriesRoute,
+    AuthenticatedAdminLivreursRoute: AuthenticatedAdminLivreursRoute,
   }
 
 const AuthenticatedAdminRouteRouteWithChildren =
@@ -466,12 +520,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedCommanderSlugRoute: typeof AuthenticatedCommanderSlugRoute
+  AuthenticatedLivraisonOrderIdRoute: typeof AuthenticatedLivraisonOrderIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedCommanderSlugRoute: AuthenticatedCommanderSlugRoute,
+  AuthenticatedLivraisonOrderIdRoute: AuthenticatedLivraisonOrderIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

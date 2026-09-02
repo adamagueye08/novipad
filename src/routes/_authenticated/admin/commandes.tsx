@@ -3,8 +3,14 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ShoppingBag, Truck, MessageCircle, Phone, Mail } from "lucide-react";
-import { adminOrdersFn, adminUpdateOrderFn, adminSendMessageFn } from "@/lib/admin.functions";
+import { ShoppingBag, Truck, MessageCircle, Phone, Mail, Bike } from "lucide-react";
+import {
+  adminOrdersFn,
+  adminUpdateOrderFn,
+  adminSendMessageFn,
+  adminCouriersFn,
+  adminAssignCourierFn,
+} from "@/lib/admin.functions";
 import { formatFcfa, formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,7 +53,15 @@ type Profile = {
   phone: string | null;
   email: string | null;
 };
-type Delivery = { id: string; status: string; address: string; phone: string };
+type Delivery = {
+  id: string;
+  status: string;
+  address: string;
+  phone: string;
+  courier_id: string | null;
+  couriers: { id: string; full_name: string; phone: string } | null;
+};
+type Courier = { id: string; full_name: string; phone: string; is_active: boolean };
 
 type OrderRow = {
   id: string;
@@ -178,10 +192,79 @@ function ContactClientDialog({
   );
 }
 
+function AssignCourierSelect({
+  delivery,
+  couriers,
+  onAssigned,
+}: {
+  delivery: Delivery;
+  couriers: Courier[];
+  onAssigned: () => void;
+}) {
+  const assignCourier = useServerFn(adminAssignCourierFn);
+  const [busy, setBusy] = useState(false);
+
+  async function onChange(value: string) {
+    setBusy(true);
+    try {
+      await assignCourier({
+        data: { deliveryId: delivery.id, courierId: value === "NONE" ? null : value },
+      });
+      toast.success(value === "NONE" ? "Livreur retiré." : "Livreur assigné.");
+      onAssigned();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Le livreur déjà assigné doit rester sélectionnable même s'il vient
+  // d'être désactivé ailleurs, pour ne pas perdre l'affichage de qui est
+  // sur cette livraison.
+  const options =
+    delivery.courier_id && !couriers.some((c) => c.id === delivery.courier_id)
+      ? [
+          ...couriers,
+          delivery.couriers
+            ? {
+                id: delivery.couriers.id,
+                full_name: delivery.couriers.full_name,
+                phone: delivery.couriers.phone,
+                is_active: false,
+              }
+            : null,
+        ].filter((c): c is Courier => c !== null)
+      : couriers;
+
+  return (
+    <Select value={delivery.courier_id ?? "NONE"} onValueChange={onChange} disabled={busy}>
+      <SelectTrigger className="h-7 w-full text-xs">
+        <SelectValue placeholder="Aucun livreur" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="NONE">Aucun livreur</SelectItem>
+        {options.map((c) => (
+          <SelectItem key={c.id} value={c.id}>
+            {c.full_name} {!c.is_active ? "(inactif)" : ""}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function AdminOrdersPage() {
   const queryClient = useQueryClient();
   const fetchOrders = useServerFn(adminOrdersFn);
   const updateOrder = useServerFn(adminUpdateOrderFn);
+  const fetchCouriers = useServerFn(adminCouriersFn);
+
+  const { data: couriersData } = useQuery({
+    queryKey: ["admin-couriers"],
+    queryFn: () => fetchCouriers(),
+  });
+  const activeCouriers = ((couriersData ?? []) as unknown as Courier[]).filter((c) => c.is_active);
 
   const [formulaFilter, setFormulaFilter] = useState<"ALL" | "CASH" | "FLEX" | "TONTINE">("ALL");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -302,15 +385,27 @@ function AdminOrdersPage() {
                       <Badge variant="outline">{FORMULA_LABELS[o.formula] ?? o.formula}</Badge>
                     </TableCell>
                     <TableCell>{formatFcfa(o.amount)}</TableCell>
-                    <TableCell className="max-w-[180px]">
+                    <TableCell className="max-w-[200px] space-y-2">
                       {delivery ? (
-                        <div className="flex items-start gap-1.5 text-xs">
-                          <Truck className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-                          <div>
-                            <div className="truncate">{delivery.address}</div>
-                            <div className="text-muted-foreground">{delivery.phone}</div>
+                        <>
+                          <div className="flex items-start gap-1.5 text-xs">
+                            <Truck className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+                            <div>
+                              <div className="truncate">{delivery.address}</div>
+                              <div className="text-muted-foreground">{delivery.phone}</div>
+                            </div>
                           </div>
-                        </div>
+                          <div className="flex items-start gap-1.5">
+                            <Bike className="mt-1 size-3.5 shrink-0 text-muted-foreground" />
+                            <AssignCourierSelect
+                              delivery={delivery}
+                              couriers={activeCouriers}
+                              onAssigned={() =>
+                                queryClient.invalidateQueries({ queryKey: ["admin-orders"] })
+                              }
+                            />
+                          </div>
+                        </>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
