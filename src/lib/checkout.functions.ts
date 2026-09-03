@@ -21,6 +21,31 @@ export const placeCashOrderFn = createServerFn({ method: "POST" })
     return placeCashOrder({ ...data, userId: context.userId });
   });
 
+export const placeCartOrderFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        items: z
+          .array(
+            z.object({
+              productId: z.string().uuid(),
+              quantity: z.number().int().min(1).max(20),
+            }),
+          )
+          .min(1)
+          .max(20),
+        method: methodSchema,
+        address: z.string().min(5).max(300),
+        phone: z.string().min(6).max(30),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { placeCartOrder } = await import("@/lib/checkout.server");
+    return placeCartOrder({ ...data, userId: context.userId });
+  });
+
 export const openFlexAccountFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>

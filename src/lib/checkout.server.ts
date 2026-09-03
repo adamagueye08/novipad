@@ -151,6 +151,127 @@ export async function placeCashOrder(input: {
   };
 }
 
+/**
+ * Commande passée depuis le panier (plusieurs produits, une seule adresse
+ * de livraison et un seul paiement pour le total). Réutilise exactement le
+ * même mécanisme que placeCashOrder (COD ou PayTech), généralisé à
+ * plusieurs lignes `order_items` au lieu d'une seule — la commande garde
+ * `product_id` pointant vers le premier article, pour rester compatible
+ * avec l'affichage existant (admin/dashboard) qui montre "un" produit par
+ * commande ; le détail complet reste consultable via `order_items`.
+ */
+export async function placeCartOrder(input: {
+  userId: string;
+  items: { productId: string; quantity: number }[];
+  method: PaymentMethod;
+  address: string;
+  phone: string;
+}) {
+  if (!input.items.length) throw new Error("Le panier est vide.");
+
+  const products = await Promise.all(
+    input.items.map(async (item) => {
+      const product = await loadProduct(item.productId);
+      if (product.stock_quantity < item.quantity) {
+        throw new Error(
+          `Stock insuffisant pour ${product.model} (${product.stock_quantity} disponible(s)).`,
+        );
+      }
+      return { ...product, quantity: item.quantity };
+    }),
+  );
+  const firstProduct = products[0];
+  if (!firstProduct) throw new Error("Le panier est vide.");
+
+  const amount = products.reduce((sum, p) => sum + p.price_cash * p.quantity, 0);
+  const itemsLabel = products.map((p) => `${p.model} x${p.quantity}`).join(", ");
+
+  const { data: order, error } = await supabaseAdmin
+    .from("orders")
+    .insert({
+      reference: reference("CMD"),
+      user_id: input.userId,
+      product_id: firstProduct.id,
+      formula: "CASH",
+      amount,
+      status: "PENDING",
+    })
+    .select("id,reference,amount")
+    .single();
+  if (error) throw new Error(error.message);
+
+  const { error: itemsError } = await supabaseAdmin.from("order_items").insert(
+    products.map((p) => ({
+      order_id: order.id,
+      product_id: p.id,
+      quantity: p.quantity,
+      unit_price: p.price_cash,
+    })),
+  );
+  if (itemsError) throw new Error(itemsError.message);
+
+  await supabaseAdmin.from("deliveries").insert({
+    order_id: order.id,
+    user_id: input.userId,
+    address: input.address,
+    phone: input.phone,
+    status: "PENDING",
+  });
+
+  if (input.method === "CASH_ON_DELIVERY") {
+    const payment = await recordPayment({
+      userId: input.userId,
+      amount,
+      method: input.method,
+      orderId: order.id,
+    });
+
+    await supabaseAdmin.from("notifications").insert({
+      user_id: input.userId,
+      title: `Commande ${order.reference} enregistrée`,
+      body: `Votre commande (${itemsLabel}) est réservée. Vous payez à la livraison.`,
+      channel: "IN_APP",
+      audience: "USER",
+    });
+
+    return {
+      orderId: order.id,
+      reference: order.reference,
+      paymentStatus: payment.status,
+      redirectUrl: null as string | null,
+    };
+  }
+
+  const { data: paymentRow, error: paymentError } = await supabaseAdmin
+    .from("payments")
+    .insert({
+      user_id: input.userId,
+      amount,
+      payment_method: input.method,
+      external_reference: reference("PAY"),
+      status: "PENDING",
+      order_id: order.id,
+    })
+    .select("id,external_reference")
+    .single();
+  if (paymentError) throw new Error(paymentError.message);
+
+  const { redirectUrl } = await createPaytechPayment({
+    refCommand: paymentRow.external_reference!,
+    amount,
+    itemName: itemsLabel,
+    commandName: `Commande ${order.reference} — ${itemsLabel}`,
+    customField: { orderId: order.id, paymentId: paymentRow.id },
+  });
+
+  return {
+    orderId: order.id,
+    reference: order.reference,
+    paymentStatus: "PENDING" as const,
+    redirectUrl,
+  };
+}
+
 export async function openFlexAccount(input: {
   userId: string;
   productId: string;
@@ -585,16 +706,26 @@ export async function confirmPaytechPayment(input: {
 
     await supabaseAdmin.from("orders").update({ status: "PAID" }).eq("id", order.id);
 
-    if (order.product_id) {
+    // Décrémente le stock de CHAQUE ligne de la commande (order_items),
+    // pas seulement du product_id "principal" — généralisation nécessaire
+    // depuis l'introduction du panier multi-produits (placeCartOrder) ;
+    // se comporte identiquement à avant pour les commandes mono-produit,
+    // qui n'ont toujours qu'une seule ligne order_items (quantity: 1).
+    const { data: items } = await supabaseAdmin
+      .from("order_items")
+      .select("product_id,quantity")
+      .eq("order_id", order.id);
+    for (const item of items ?? []) {
+      if (!item.product_id) continue;
       const { data: product } = await supabaseAdmin
         .from("products")
-        .select("id,model,stock_quantity")
-        .eq("id", order.product_id)
+        .select("id,stock_quantity")
+        .eq("id", item.product_id)
         .maybeSingle();
       if (product) {
         await supabaseAdmin
           .from("products")
-          .update({ stock_quantity: Math.max(0, product.stock_quantity - 1) })
+          .update({ stock_quantity: Math.max(0, product.stock_quantity - item.quantity) })
           .eq("id", product.id);
       }
     }

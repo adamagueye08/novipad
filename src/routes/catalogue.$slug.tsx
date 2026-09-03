@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BadgeCheck, Tablet, ShieldCheck } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Tablet, ShieldCheck, Heart, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { AnimatedBackground } from "@/components/site/AnimatedBackground";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { productQuery } from "@/lib/api";
 import { formatFcfa } from "@/lib/format";
+import { useFavorites } from "@/hooks/use-favorites";
+import { useCart } from "@/hooks/use-cart";
 
 export const Route = createFileRoute("/catalogue/$slug")({
   head: () => ({
@@ -30,6 +33,8 @@ export const Route = createFileRoute("/catalogue/$slug")({
 function ProductPage() {
   const { slug } = Route.useParams();
   const { data: product, isLoading } = useQuery(productQuery(slug));
+  const { has, toggle } = useFavorites();
+  const { addItem } = useCart();
 
   const features = Array.isArray(product?.features) ? (product?.features as string[]) : [];
   const specs = Array.isArray(product?.specs)
@@ -37,8 +42,7 @@ function ProductPage() {
     : [];
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <AnimatedBackground />
+    <div className="relative min-h-screen overflow-hidden">
       <SiteHeader />
       <main className="container-page py-10 md:py-14">
         <Link
@@ -67,10 +71,24 @@ function ProductPage() {
             </div>
 
             <div>
-              <span className="mb-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                {product.category || "Produit"}
-              </span>
-              <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  {product.category || "Produit"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => toggle(product.id)}
+                  aria-label={has(product.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
+                  className="flex size-9 items-center justify-center rounded-full border border-border/70 transition-smooth hover:bg-accent"
+                >
+                  <Heart
+                    className={
+                      has(product.id) ? "size-4 fill-destructive text-destructive" : "size-4"
+                    }
+                  />
+                </button>
+              </div>
+              <h1 className="mt-2 font-display text-3xl font-bold tracking-tight md:text-4xl">
                 {product.model} {product.generation}
               </h1>
               <p className="mt-2 text-muted-foreground">
@@ -132,7 +150,26 @@ function ProductPage() {
                   </Link>
                 </Button>
 
-                <Button asChild variant="outline">
+                <Button
+                  variant="outline"
+                  disabled={product.stock_quantity <= 0}
+                  onClick={() => {
+                    addItem({
+                      productId: product.id,
+                      slug: product.slug,
+                      model: product.model,
+                      generation: product.generation,
+                      storage: product.storage,
+                      image: product.images?.[0] ?? null,
+                      priceCash: product.price_cash,
+                    });
+                    toast.success("Ajouté au panier.");
+                  }}
+                >
+                  <ShoppingCart /> Ajouter au panier
+                </Button>
+
+                <Button asChild variant="ghost">
                   <Link to="/formules">Comparer les formules</Link>
                 </Button>
               </div>
@@ -140,6 +177,7 @@ function ProductPage() {
           </div>
         )}
       </main>
+      <MobileBottomNav />
       <SiteFooter />
     </div>
   );
