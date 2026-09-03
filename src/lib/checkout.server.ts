@@ -10,6 +10,21 @@ function reference(prefix: string) {
   return `${prefix}-${stamp}${rand}`;
 }
 
+/**
+ * Référence dédiée aux paiements envoyés à PayTech (external_reference /
+ * ref_command). Volontairement SANS tiret ni séparateur : tous les
+ * exemples de la doc PayTech et de ses SDK tiers montrent un ref_command
+ * strictement alphanumérique — un tiret provoque une erreur "Format de
+ * requête invalide" côté PayTech. reference() ci-dessus garde son tiret
+ * pour les références affichées à l'écran (orders.reference, ex.
+ * "CMD-MTGJRINUC3JY"), jamais envoyées telles quelles à PayTech.
+ */
+function paytechReference(prefix: string) {
+  const stamp = Date.now().toString(36).toUpperCase();
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `${prefix}${stamp}${rand}`;
+}
+
 /** Simulation de passerelle: Wave / Orange Money / carte sont confirmés, le paiement à la livraison reste en attente. */
 async function recordPayment(input: {
   userId: string;
@@ -127,7 +142,7 @@ export async function placeCashOrder(input: {
       user_id: input.userId,
       amount: product.price_cash,
       payment_method: input.method,
-      external_reference: reference("PAY"),
+      external_reference: paytechReference("PAY"),
       status: "PENDING",
       order_id: order.id,
     })
@@ -248,7 +263,7 @@ export async function placeCartOrder(input: {
       user_id: input.userId,
       amount,
       payment_method: input.method,
-      external_reference: reference("PAY"),
+      external_reference: paytechReference("PAY"),
       status: "PENDING",
       order_id: order.id,
     })
@@ -426,7 +441,7 @@ export async function depositToFlex(input: {
       user_id: input.userId,
       amount: input.amount,
       payment_method: input.method,
-      external_reference: reference("PAY"),
+      external_reference: paytechReference("PAY"),
       status: "PENDING",
       flex_account_id: account.id,
     })
@@ -604,7 +619,7 @@ export async function payContribution(input: {
       user_id: input.userId,
       amount,
       payment_method: input.method,
-      external_reference: reference("PAY"),
+      external_reference: paytechReference("PAY"),
       status: "PENDING",
       tontine_id: member.tontine_id,
       tontine_member_id: member.id,
