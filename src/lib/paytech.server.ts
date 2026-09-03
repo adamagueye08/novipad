@@ -45,7 +45,14 @@ export async function createPaytechPayment(input: {
 
   const body = {
     item_name: input.itemName,
-    item_price: input.amount,
+    // BIGINT côté Postgres → PostgREST/Supabase sérialise toujours ces
+    // colonnes en CHAÎNE dans le JSON (pour ne pas perdre de précision
+    // au-delà de ce que JS peut représenter), même si nos types TS
+    // déclarent `number` (généré, mais trompeur pour les bigint). Sans
+    // cette conversion explicite, PayTech reçoit "260000" (chaîne) au
+    // lieu de 260000 (nombre) pour item_price — ce qui déclenche leur
+    // erreur "Format de requête invalide" côté PayTech.
+    item_price: Number(input.amount),
     currency: "XOF",
     ref_command: input.refCommand,
     command_name: input.commandName,
