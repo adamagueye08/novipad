@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Package, Phone, Truck, Bike, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { AnimatedBackground } from "@/components/site/AnimatedBackground";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
@@ -60,8 +60,7 @@ function DeliveryTrackingPage() {
   const failed = delivery?.status === "FAILED";
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <AnimatedBackground />
+    <div className="relative min-h-screen overflow-hidden">
       <SiteHeader />
       <main className="container-page max-w-2xl py-10">
         <Link
@@ -182,6 +181,7 @@ function DeliveryTrackingPage() {
           </div>
         )}
       </main>
+      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { XCircle } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { AnimatedBackground } from "@/components/site/AnimatedBackground";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 
@@ -21,7 +21,6 @@ function PaymentCancelPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
-      <AnimatedBackground />
       <SiteHeader />
       <main className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center px-4 py-16 text-center">
         <XCircle className="size-14 text-muted-foreground" />
@@ -39,6 +38,7 @@ function PaymentCancelPage() {
           <Link to="/dashboard">Réessayer depuis mon espace</Link>
         </Button>
       </main>
+      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

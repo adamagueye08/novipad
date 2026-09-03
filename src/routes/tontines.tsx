@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Users, CalendarClock, Tablet } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { AnimatedBackground } from "@/components/site/AnimatedBackground";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { tontinesQuery } from "@/lib/api";
@@ -33,8 +33,7 @@ function TontinesPage() {
   const { data: tontines = [], isLoading } = useQuery(tontinesQuery());
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <AnimatedBackground />
+    <div className="relative min-h-screen overflow-hidden">
       <SiteHeader />
       <main className="container-page py-12 md:py-16">
         <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
@@ -117,6 +116,7 @@ function TontinesPage() {
           </div>
         )}
       </main>
+      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

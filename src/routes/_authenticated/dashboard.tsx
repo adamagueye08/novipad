@@ -20,7 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { AnimatedBackground } from "@/components/site/AnimatedBackground";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Input } from "@/components/ui/input";
 import { formatFcfa, formatDate, progressPercent } from "@/lib/format";
@@ -108,26 +108,6 @@ function DashboardPage() {
     },
   });
 
-  const messages = useQuery({
-    queryKey: ["my-notifications", userId],
-    enabled: !!userId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("id,title,body,created_at,read_at")
-        .order("created_at", { ascending: false })
-        .limit(50);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-  const unreadCount = (messages.data ?? []).filter((m) => !m.read_at).length;
-
-  async function markMessageRead(id: string) {
-    await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
-    messages.refetch();
-  }
-
   const flex = useQuery({
     queryKey: ["my-flex", userId],
     enabled: !!userId,
@@ -204,8 +184,7 @@ function DashboardPage() {
   );
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <AnimatedBackground />
+    <div className="relative min-h-screen overflow-hidden">
       <SiteHeader />
       <main className="container-page py-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -246,40 +225,7 @@ function DashboardPage() {
           />
         </section>
 
-        <section className="mt-10 grid gap-6 lg:grid-cols-2">
-          <Panel
-            title={`Messages${unreadCount > 0 ? ` (${unreadCount} non lu${unreadCount > 1 ? "s" : ""})` : ""}`}
-          >
-            {(messages.data?.length ?? 0) === 0 ? (
-              <Empty text="Aucun message pour le moment." />
-            ) : (
-              <ul className="space-y-3">
-                {messages.data!.map((m) => (
-                  <li
-                    key={m.id}
-                    onClick={() => !m.read_at && markMessageRead(m.id)}
-                    className={`cursor-pointer rounded-2xl border p-3 transition ${
-                      m.read_at
-                        ? "border-border/60 bg-transparent"
-                        : "border-primary/40 bg-primary/5"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium">{m.title}</p>
-                      {!m.read_at && (
-                        <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />
-                      )}
-                    </div>
-                    {m.body && <p className="mt-1 text-xs text-muted-foreground">{m.body}</p>}
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">
-                      {formatDate(m.created_at)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-
+        <section className="mt-10">
           <Panel title="Mes commandes">
             {(orders.data?.length ?? 0) === 0 ? (
               <Empty
@@ -499,6 +445,7 @@ function DashboardPage() {
           </Panel>
         </section>
       </main>
+      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

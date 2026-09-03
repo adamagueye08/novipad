@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,7 +103,7 @@ function OrderPage() {
   const price = product ? (formula === "CASH" ? product.price_cash : product.price_flex) : 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <SiteHeader />
       <main className="container-page py-10 md:py-14">
         <Link
@@ -269,6 +270,7 @@ function OrderPage() {
           </div>
         )}
       </main>
+      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

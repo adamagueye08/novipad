@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { AnimatedBackground } from "@/components/site/AnimatedBackground";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ProductCard } from "@/components/site/ProductCard";
 import { Input } from "@/components/ui/input";
@@ -72,8 +72,7 @@ function CataloguePage() {
   }, [products, search, category, storage, sort]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <AnimatedBackground />
+    <div className="relative min-h-screen overflow-hidden">
       <SiteHeader />
       <main className="container-page py-12 md:py-16">
         <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
@@ -176,6 +175,7 @@ function CataloguePage() {
           </div>
         )}
       </main>
+      <MobileBottomNav />
       <SiteFooter />
     </div>
   );
