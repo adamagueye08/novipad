@@ -321,6 +321,65 @@ CREATE POLICY "couriers_client_select_assigned" ON public.couriers
 `src/routes/_authenticated/admin/livreurs.tsx` (CRUD admin),
 `src/routes/_authenticated/livraison.$orderId.tsx` (page client)
 
+### 5.5 Panier et favoris (`useCart`, `useFavorites`, `placeCartOrder`)
+
+**Le choix de conception** : panier et favoris vivent en **localStorage**
+(par appareil, pas de table dédiée en base) — pas besoin de compte pour
+mettre un produit en favori ou l'ajouter au panier, seule la validation
+finale de la commande exige d'être connecté. C'est le plus simple qui
+fonctionne ; on migrera vers une persistance côté serveur (liée au
+compte) seulement si on a besoin qu'un panier survive au changement
+d'appareil.
+
+- `src/hooks/use-cart.tsx` / `use-favorites.tsx` : contextes React,
+  persistés dans `localStorage` (clés `jokkotech_cart` /
+  `jokkotech_favorites`), montés une fois à la racine (`__root.tsx`)
+- `ProductCard.tsx` et la fiche produit (`catalogue.$slug.tsx`) : bouton
+  cœur (favoris) et bouton panier
+- `/panier` : liste éditable, formulaire adresse/téléphone, un seul
+  paiement pour tout le panier (Cash uniquement — Flex/Tontine restent
+  liés à un produit unique via leurs parcours dédiés)
+- `/favoris` : liste des produits favoris, réutilise `ProductCard`
+
+**Commande multi-produits (`placeCartOrder` dans `checkout.server.ts`)** —
+le point le plus subtil de cette fonctionnalité : la table `order_items`
+existait déjà (une ligne par commande, `quantity: 1`), donc `placeCartOrder`
+la généralise à plusieurs lignes par commande au lieu d'en créer une
+nouvelle structure. `orders.product_id` garde le **premier article** du
+panier, pour rester compatible avec tout l'affichage existant
+(admin/dashboard qui montrent "un" produit par commande) — le détail
+complet, lui, reste dans `order_items`. Le webhook PayTech qui décrémente
+le stock a été généralisé pour parcourir `order_items` au lieu de ne
+décrémenter que `order.product_id` de 1 : comportement identique à avant
+pour les commandes mono-produit, correct désormais pour le panier.
+
+📍 **À lire** : `src/lib/checkout.server.ts` (`placeCartOrder`, et le
+webhook IPN autour du décrément de stock), `src/routes/panier.tsx`
+
+---
+
+## 6. Fond animé, transitions de page et navigation
+
+- **Fond animé** (`AnimatedBackground.tsx`) : monté une seule fois à la
+  racine (`__root.tsx`), en `position: fixed` — visible sur toutes les
+  pages sans exception (avant, il était instancié par page et coupé par
+  le conteneur de chaque page). Suit légèrement la souris (lerp + rAF,
+  respecte `prefers-reduced-motion`)
+- **Transition de page** : keyframe CSS `page-enter` (fondu + légère
+  montée), rejouée à chaque navigation via une div keyée par `pathname`
+  dans `__root.tsx`
+- **Navigation mobile** (`MobileBottomNav.tsx`) : barre fixée en bas de
+  l'écran (Accueil, Catalogue, Panier, Favoris, Compte) sur toutes les
+  pages publiques/client — remplace le rôle principal du menu hamburger
+  sur mobile, qui ne garde que Formules/Tontines/support/messagerie
+- **Messagerie client** (`MessagesButton.tsx`) : popover accessible
+  depuis le header sur toutes les pages (visible uniquement connecté),
+  remplace l'ancien panneau "Messages" qui vivait dans le dashboard
+- **Support client** (`SupportButton.tsx`) : coordonnées (téléphone,
+  WhatsApp, email, horaires) éditables depuis `/admin/parametres`
+  (paramètre `support`), affichées dans un dialog accessible depuis le
+  header
+
 ---
 
 ## 7. Explication détaillée, fichier par fichier
@@ -495,6 +554,8 @@ totalement l'interface. C'est le contrôle serveur qui compte réellement.
 | `src/routes/formules.tsx` | Explication des 3 formules Cash/Flex/Tontine, étapes, FAQ — page 100% statique (pas d'appel serveur), juste du contenu |
 | `src/routes/tontines.tsx` | Liste des tontines ouvertes, via `tontinesQuery()` |
 | `src/routes/auth.tsx` | Connexion / inscription |
+| `src/routes/panier.tsx` | Panier (localStorage, `useCart`) — commande multi-produits, voir section 5.5 |
+| `src/routes/favoris.tsx` | Favoris (localStorage, `useFavorites`) — voir section 5.5 |
 
 📍 `src/lib/api.ts` centralise les requêtes **publiques** en lecture seule
 (via le client `supabase` classique, donc soumises à RLS — un visiteur non
