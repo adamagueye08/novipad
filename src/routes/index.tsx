@@ -14,7 +14,7 @@ import {
 import heroIpad from "@/assets/hero-ipad.png";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { AnimatedBackground } from "@/components/site/AnimatedBackground";
+import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ProductCard } from "@/components/site/ProductCard";
 import { FormulaCards } from "@/components/site/FormulaCards";
@@ -136,8 +136,7 @@ function Landing() {
   const featured = products.slice(0, 3);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <AnimatedBackground />
+    <div className="relative min-h-screen overflow-hidden">
       <SiteHeader />
       <StoriesRow stories={stories} />
 
@@ -169,9 +168,9 @@ function Landing() {
             </div>
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-3">
               {[
-                { k: "Garantie", v: "6 mois" },
+                { k: "Qualité", v: "Contrôlée" },
                 { k: "Dépôt Flex", v: "Libre" },
-                { k: "Paiement", v: "Wave · OM" },
+                { k: "Paiement", v: "Wave · OM · Carte" },
               ].map((s) => (
                 <div key={s.k} className="glass rounded-2xl px-3 py-3">
                   <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -373,6 +372,7 @@ function Landing() {
         </div>
       </section>
 
+      <MobileBottomNav />
       <SiteFooter />
     </div>
   );
