@@ -374,3 +374,29 @@
 @utility animate-blob-b {
   animation: blob-drift-b 26s ease-in-out infinite;
 }
+
+/* Transition de page : un léger fondu + montée, rejoué à chaque
+   changement de route (voir __root.tsx, la div est keyée par pathname). */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-page-enter {
+  animation: page-enter 0.35s ease-out both;
+}
+
+/* Espace pour ne pas laisser le contenu caché derrière la barre de
+   navigation mobile fixée en bas (MobileBottomNav), uniquement sur les
+   largeurs où elle s'affiche (elle est md:hidden). */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+}

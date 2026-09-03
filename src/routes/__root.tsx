@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -12,6 +13,9 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { AnimatedBackground } from "@/components/site/AnimatedBackground";
+import { CartProvider } from "@/hooks/use-cart";
+import { FavoritesProvider } from "@/hooks/use-favorites";
 
 function NotFoundComponent() {
   return (
@@ -119,12 +123,22 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <Toaster position="top-center" richColors />
+      <CartProvider>
+        <FavoritesProvider>
+          <AnimatedBackground />
+          {/* Keyée par pathname : rejoue la transition d'entrée (fade + montée)
+              à chaque changement de page, cf. .animate-page-enter dans styles.css. */}
+          <div key={pathname} className="animate-page-enter">
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </div>
+          <Toaster position="top-center" richColors />
+        </FavoritesProvider>
+      </CartProvider>
     </QueryClientProvider>
   );
 }

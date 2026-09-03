@@ -291,7 +291,7 @@ export const adminUpdateSettingFn = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        key: z.enum(["company", "flex", "stock", "delivery", "terms"]),
+        key: z.enum(["company", "flex", "stock", "delivery", "terms", "support"]),
         value: z.record(z.string(), z.unknown()),
       })
       .parse(data),

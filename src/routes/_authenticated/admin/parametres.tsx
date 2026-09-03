@@ -30,6 +30,7 @@ type FlexValue = { min_deposit: number; cancellation_fee_percent: number };
 type StockValue = { low_stock_threshold: number };
 type DeliveryValue = { free_above: number; default_fee: number; zones: string[] };
 type TermsValue = { general: string; flex: string; tontine: string };
+type SupportValue = { phone: string; whatsapp: string; email: string; hours: string };
 
 function SettingCard({
   title,
@@ -77,6 +78,7 @@ function AdminSettingsPage() {
   const [delivery, setDelivery] = useState<DeliveryValue | null>(null);
   const [zonesText, setZonesText] = useState("");
   const [terms, setTerms] = useState<TermsValue | null>(null);
+  const [support, setSupport] = useState<SupportValue | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -88,10 +90,17 @@ function AdminSettingsPage() {
     setDelivery((prev) => prev ?? d);
     setZonesText((prev) => prev || (d?.zones ?? []).join(", "));
     setTerms((t) => t ?? byKey<TermsValue>("terms") ?? null);
+    setSupport(
+      (s) =>
+        s ?? byKey<SupportValue>("support") ?? { phone: "", whatsapp: "", email: "", hours: "" },
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows.length]);
 
-  async function save(key: "company" | "flex" | "stock" | "delivery" | "terms", value: object) {
+  async function save(
+    key: "company" | "flex" | "stock" | "delivery" | "terms" | "support",
+    value: object,
+  ) {
     setSavingKey(key);
     try {
       await updateSetting({ data: { key, value } });
@@ -104,7 +113,7 @@ function AdminSettingsPage() {
     }
   }
 
-  if (isLoading || !company || !flex || !stock || !delivery || !terms) {
+  if (isLoading || !company || !flex || !stock || !delivery || !terms || !support) {
     return <p className="text-sm text-muted-foreground">Chargement…</p>;
   }
 
@@ -271,6 +280,46 @@ function AdminSettingsPage() {
               rows={3}
               value={terms.tontine}
               onChange={(e) => setTerms({ ...terms, tontine: e.target.value })}
+            />
+          </div>
+        </SettingCard>
+
+        <SettingCard
+          title="Support client"
+          description="Coordonnées affichées dans le bouton « Contacter le support » du site."
+          saving={savingKey === "support"}
+          onSave={() => save("support", support)}
+        >
+          <div>
+            <Label>Téléphone</Label>
+            <Input
+              value={support.phone}
+              onChange={(e) => setSupport({ ...support, phone: e.target.value })}
+              placeholder="Ex. 77 123 45 67"
+            />
+          </div>
+          <div>
+            <Label>WhatsApp</Label>
+            <Input
+              value={support.whatsapp}
+              onChange={(e) => setSupport({ ...support, whatsapp: e.target.value })}
+              placeholder="Ex. 221771234567 (avec indicatif, sans +)"
+            />
+          </div>
+          <div>
+            <Label>Email</Label>
+            <Input
+              value={support.email}
+              onChange={(e) => setSupport({ ...support, email: e.target.value })}
+              placeholder="support@jokkotech.sn"
+            />
+          </div>
+          <div>
+            <Label>Horaires</Label>
+            <Input
+              value={support.hours}
+              onChange={(e) => setSupport({ ...support, hours: e.target.value })}
+              placeholder="Ex. Lun-Sam, 9h-19h"
             />
           </div>
         </SettingCard>
