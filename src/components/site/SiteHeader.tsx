@@ -16,6 +16,21 @@ const NAV = [
   { to: "/tontines", label: "Tontines" },
 ] as const;
 
+/** Lien avec un soulignement animé (trait qui apparaît de gauche à droite au survol). */
+function NavLink({ to, label }: { to: (typeof NAV)[number]["to"]; label: string }) {
+  return (
+    <Link
+      to={to}
+      activeOptions={{ exact: to === "/" }}
+      className="group relative rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-smooth hover:text-foreground"
+      activeProps={{ className: "text-foreground" }}
+    >
+      {label}
+      <span className="pointer-events-none absolute inset-x-4 -bottom-0.5 h-px origin-left scale-x-0 bg-gradient-primary transition-transform duration-300 ease-out group-hover:scale-x-100" />
+    </Link>
+  );
+}
+
 function IconLinkWithBadge({
   to,
   count,
@@ -48,23 +63,21 @@ export function SiteHeader() {
   const { count: favCount } = useFavorites();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 glass-soft">
-      <div className="container-page flex h-16 items-center justify-between gap-4">
+    <header className="sticky top-4 z-50 px-4">
+      <div
+        className="glass mx-auto flex h-16 max-w-5xl animate-nav-in items-center justify-between gap-4 rounded-full px-5 shadow-glass"
+        style={{
+          backdropFilter: "blur(16px) saturate(140%)",
+          WebkitBackdropFilter: "blur(16px) saturate(140%)",
+        }}
+      >
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logo} alt="JokkoTech" className="h-9 w-auto" />
+          <img src={logo} alt="JokkoTech" className="h-8 w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
           {NAV.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeOptions={{ exact: item.to === "/" }}
-              className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition-smooth hover:bg-accent hover:text-accent-foreground"
-              activeProps={{ className: "bg-accent text-accent-foreground" }}
-            >
-              {item.label}
-            </Link>
+            <NavLink key={item.to} to={item.to} label={item.label} />
           ))}
         </nav>
 
@@ -77,17 +90,25 @@ export function SiteHeader() {
           </div>
 
           {loading ? null : user ? (
-            <Button asChild variant="hero" size="sm" className="hidden md:inline-flex">
+            <Button
+              asChild
+              size="sm"
+              className="hidden rounded-full bg-primary text-primary-foreground shadow-[0_0_24px_-4px_var(--brand-cyan)] transition-smooth hover:scale-[1.04] active:scale-[0.97] md:inline-flex"
+            >
               <Link to="/dashboard">
                 <LayoutDashboard /> Mon espace
               </Link>
             </Button>
           ) : (
             <div className="hidden items-center gap-2 md:flex">
-              <Button asChild variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm" className="rounded-full">
                 <Link to="/auth">Connexion</Link>
               </Button>
-              <Button asChild variant="hero" size="sm">
+              <Button
+                asChild
+                size="sm"
+                className="rounded-full bg-primary text-primary-foreground shadow-[0_0_24px_-4px_var(--brand-cyan)] transition-smooth hover:scale-[1.04] active:scale-[0.97]"
+              >
                 <Link to="/auth" search={{ mode: "signup" }}>
                   Créer un compte
                 </Link>
@@ -102,15 +123,15 @@ export function SiteHeader() {
             type="button"
             aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
             onClick={() => setOpen((v) => !v)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border/70 md:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border/70 transition-smooth active:scale-95 md:hidden"
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
       {open && (
-        <div className="border-t border-border/60 bg-card/95 px-5 pb-5 pt-3 backdrop-blur-xl md:hidden">
+        <div className="glass mx-auto mt-2 max-w-5xl rounded-3xl px-5 pb-5 pt-3 md:hidden">
           <nav className="flex flex-col gap-1">
             {NAV.filter((item) => item.to === "/formules" || item.to === "/tontines").map(
               (item) => (
@@ -131,15 +152,20 @@ export function SiteHeader() {
           </div>
           <div className="mt-3 flex flex-col gap-2">
             {user ? (
-              <Button asChild variant="hero" onClick={() => setOpen(false)}>
+              <Button asChild className="rounded-full" onClick={() => setOpen(false)}>
                 <Link to="/dashboard">Mon espace</Link>
               </Button>
             ) : (
               <>
-                <Button asChild variant="outline" onClick={() => setOpen(false)}>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => setOpen(false)}
+                >
                   <Link to="/auth">Connexion</Link>
                 </Button>
-                <Button asChild variant="hero" onClick={() => setOpen(false)}>
+                <Button asChild className="rounded-full" onClick={() => setOpen(false)}>
                   <Link to="/auth" search={{ mode: "signup" }}>
                     Créer un compte
                   </Link>

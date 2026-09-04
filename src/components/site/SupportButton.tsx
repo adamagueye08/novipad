@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { LifeBuoy, Phone, MessageCircle, Mail, Clock } from "lucide-react";
+import { Headphones, Phone, MessageCircle, Mail, Clock } from "lucide-react";
 import { settingsQuery } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,7 @@ export function SupportButton({ className }: { className?: string }) {
           className={className}
           aria-label="Contacter le support"
         >
-          <LifeBuoy className="size-4" />
+          <Headphones className="size-4" />
         </Button>
       </DialogTrigger>
       <DialogContent>

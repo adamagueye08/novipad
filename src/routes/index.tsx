@@ -26,6 +26,9 @@ import {
 } from "@/components/ui/accordion";
 import { productsQuery, storiesQuery } from "@/lib/api";
 import { StoriesRow } from "@/components/site/StoriesRow";
+import { Marquee } from "@/components/site/Marquee";
+import { Reveal } from "@/components/site/Reveal";
+import { RevealWords } from "@/components/site/RevealWords";
 
 const TITLE = "JokkoTech — Votre iPad Apple au paiement qui vous correspond";
 const DESCRIPTION =
@@ -142,15 +145,33 @@ function Landing() {
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-hero">
-        <div className="container-page grid items-center gap-12 py-16 md:grid-cols-2 md:py-28">
-          <div className="animate-rise">
+        {/* iPad en arrière-plan (derrière le texte, pas à côté) : positionné en
+            grand format, léger flottement, estompé vers la gauche pour que le
+            texte reste lisible par-dessus — sur mobile comme sur desktop. */}
+        <div className="pointer-events-none absolute inset-0 -z-0 flex items-center justify-end [perspective:1200px]">
+          <div className="absolute inset-0 rounded-full bg-gradient-primary opacity-20 blur-3xl" />
+          <img
+            src={heroIpad}
+            alt="iPad Apple argent vu de face et de dos"
+            width={1200}
+            height={1200}
+            className="h-[120%] w-auto max-w-none animate-tilt opacity-70 drop-shadow-2xl [transform-style:preserve-3d] sm:h-[110%] md:h-[95%] md:w-[60%] md:max-w-2xl md:opacity-90"
+            style={{
+              maskImage: "linear-gradient(90deg, transparent 0%, black 38%)",
+              WebkitMaskImage: "linear-gradient(90deg, transparent 0%, black 38%)",
+            }}
+          />
+        </div>
+
+        <div className="container-page relative z-10 py-16 md:py-28">
+          <div className="animate-rise max-w-xl">
             <span className="glass inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-primary">
               <Sparkles className="h-3.5 w-3.5" /> iPad Apple importés des États-Unis
             </span>
             <h1 className="mt-6 text-4xl font-bold leading-[1.05] sm:text-5xl md:text-6xl">
-              Votre iPad,
+              <RevealWords text="Votre iPad," />
               <br />
-              <span className="text-gradient">sans compromis.</span>
+              <RevealWords text="sans compromis." className="text-gradient" />
             </h1>
             <p className="mt-5 max-w-md text-base text-muted-foreground sm:text-lg">
               Cash, Flex ou Tontine — choisissez comment payer. Livraison suivie, paiement sécurisé,
@@ -181,29 +202,30 @@ function Landing() {
               ))}
             </dl>
           </div>
-
-          <div className="relative flex justify-center [perspective:1200px]">
-            <div className="absolute inset-0 -z-10 rounded-full bg-gradient-primary opacity-20 blur-3xl" />
-            <img
-              src={heroIpad}
-              alt="iPad Apple argent vu de face et de dos"
-              width={1200}
-              height={1200}
-              className="w-[86%] max-w-md animate-tilt drop-shadow-2xl [transform-style:preserve-3d]"
-            />
-          </div>
         </div>
       </section>
+
+      <Marquee
+        items={[
+          "iPad Apple authentiques",
+          "Paiement Cash, Flex ou Tontine",
+          "Garantie constructeur",
+          "Livraison 24-48h à Dakar",
+          "Wave · Orange Money · Carte",
+        ]}
+      />
 
       {/* FORMULES */}
       <section id="formules" className="section bg-subtle">
         <div className="container-page">
-          <header className="max-w-2xl">
-            <h2 className="text-3xl font-bold sm:text-4xl">Trois formules, un seul iPad</h2>
-            <p className="mt-3 text-muted-foreground">
-              Les prix sont gérés depuis notre back-office et mis à jour en temps réel.
-            </p>
-          </header>
+          <Reveal>
+            <header className="max-w-2xl">
+              <h2 className="text-3xl font-bold sm:text-4xl">Trois formules, un seul iPad</h2>
+              <p className="mt-3 text-muted-foreground">
+                Les prix sont gérés depuis notre back-office et mis à jour en temps réel.
+              </p>
+            </header>
+          </Reveal>
           <FormulaCards className="mt-10" />
         </div>
       </section>
@@ -211,16 +233,20 @@ function Landing() {
       {/* POURQUOI NOUS */}
       <section className="section">
         <div className="container-page">
-          <h2 className="max-w-xl text-3xl font-bold sm:text-4xl">Pourquoi nous choisir</h2>
+          <Reveal>
+            <h2 className="max-w-xl text-3xl font-bold sm:text-4xl">Pourquoi nous choisir</h2>
+          </Reveal>
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {WHY.map((item) => (
-              <article key={item.title} className="glass hover-lift rounded-3xl p-6">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-primary text-primary-foreground">
-                  <item.icon className="h-5 w-5" />
-                </span>
-                <h3 className="mt-5 text-base font-semibold">{item.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{item.text}</p>
-              </article>
+            {WHY.map((item, i) => (
+              <Reveal key={item.title} delay={i * 80}>
+                <article className="glass hover-tilt rounded-3xl p-6">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-primary text-primary-foreground">
+                    <item.icon className="h-5 w-5" />
+                  </span>
+                  <h3 className="mt-5 text-base font-semibold">{item.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{item.text}</p>
+                </article>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -262,14 +288,16 @@ function Landing() {
       {/* COMMENT CA MARCHE */}
       <section className="section">
         <div className="container-page">
-          <h2 className="text-3xl font-bold sm:text-4xl">Comment ça marche</h2>
+          <Reveal>
+            <h2 className="text-3xl font-bold sm:text-4xl">Comment ça marche</h2>
+          </Reveal>
           <ol className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((s) => (
-              <li key={s.n} className="glass rounded-3xl p-6">
+            {STEPS.map((s, i) => (
+              <Reveal key={s.n} as="li" delay={i * 80} className="glass rounded-3xl p-6">
                 <span className="font-display text-2xl font-bold text-gradient">{s.n}</span>
                 <h3 className="mt-4 text-base font-semibold">{s.t}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
-              </li>
+              </Reveal>
             ))}
           </ol>
         </div>
@@ -277,7 +305,7 @@ function Landing() {
 
       {/* PAIEMENTS SECURISES */}
       <section className="section bg-subtle">
-        <div className="container-page glass grid gap-8 rounded-4xl p-8 md:grid-cols-2 md:p-12">
+        <Reveal className="container-page glass grid gap-8 rounded-4xl p-8 md:grid-cols-2 md:p-12">
           <div>
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-flex text-primary-foreground">
               <CreditCard className="h-5 w-5" />
@@ -303,29 +331,33 @@ function Landing() {
               </li>
             ))}
           </ul>
-        </div>
+        </Reveal>
       </section>
 
       {/* TEMOIGNAGES */}
       <section className="section">
         <div className="container-page">
-          <h2 className="text-3xl font-bold sm:text-4xl">Ils nous font confiance</h2>
+          <Reveal>
+            <h2 className="text-3xl font-bold sm:text-4xl">Ils nous font confiance</h2>
+          </Reveal>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {TESTIMONIALS.map((t) => (
-              <figure key={t.name} className="glass hover-lift rounded-3xl p-6">
-                <blockquote className="text-sm leading-relaxed text-foreground/85">
-                  “{t.text}”
-                </blockquote>
-                <figcaption className="mt-5 flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-primary text-xs font-semibold text-primary-foreground">
-                    {t.name.slice(0, 1)}
-                  </span>
-                  <span>
-                    <span className="block text-sm font-semibold">{t.name}</span>
-                    <span className="block text-xs text-muted-foreground">{t.role}</span>
-                  </span>
-                </figcaption>
-              </figure>
+            {TESTIMONIALS.map((t, i) => (
+              <Reveal key={t.name} delay={i * 80}>
+                <figure className="glass hover-lift rounded-3xl p-6">
+                  <blockquote className="text-sm leading-relaxed text-foreground/85">
+                    “{t.text}”
+                  </blockquote>
+                  <figcaption className="mt-5 flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-primary text-xs font-semibold text-primary-foreground">
+                      {t.name.slice(0, 1)}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold">{t.name}</span>
+                      <span className="block text-xs text-muted-foreground">{t.role}</span>
+                    </span>
+                  </figcaption>
+                </figure>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -334,7 +366,9 @@ function Landing() {
       {/* FAQ */}
       <section className="section bg-subtle">
         <div className="container-page max-w-3xl">
-          <h2 className="text-3xl font-bold sm:text-4xl">Questions fréquentes</h2>
+          <Reveal>
+            <h2 className="text-3xl font-bold sm:text-4xl">Questions fréquentes</h2>
+          </Reveal>
           <Accordion type="single" collapsible className="mt-8">
             {FAQ.map((item, i) => (
               <AccordionItem key={item.q} value={`item-${i}`}>

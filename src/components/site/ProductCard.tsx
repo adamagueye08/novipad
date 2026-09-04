@@ -14,7 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
   const favorited = has(product.id);
 
   return (
-    <div className="glass hover-lift group relative flex flex-col overflow-hidden rounded-3xl">
+    <div className="glass hover-tilt group relative flex flex-col overflow-hidden rounded-3xl">
       <button
         type="button"
         aria-label={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
@@ -37,7 +37,7 @@ export function ProductCard({ product }: { product: Product }) {
             src={image}
             alt={`${product.model} ${product.generation ?? ""}`}
             loading="lazy"
-            className="h-36 object-contain"
+            className="h-36 object-contain transition-transform duration-500 ease-out group-hover:scale-[1.06]"
           />
         ) : (
           <Tablet className="h-16 w-16 text-primary/40" />

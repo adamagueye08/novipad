@@ -12,11 +12,11 @@ const ITEMS = [
 ];
 
 /**
- * Navigation principale sur mobile — fixée en bas de l'écran (pattern
- * d'app mobile plutôt que le menu hamburger en haut, plus accessible au
- * pouce). Masquée sur desktop (md:hidden), où la nav classique du header
- * reste utilisée. Le padding-bottom compensant sa hauteur est géré
- * globalement dans styles.css plutôt que page par page.
+ * Navigation principale sur mobile — pilule flottante "verre" fixée en bas
+ * de l'écran (pattern d'app mobile plutôt que le menu hamburger en haut,
+ * plus accessible au pouce). Masquée sur desktop (md:hidden), où la nav
+ * du header reste utilisée. Le padding-bottom compensant sa hauteur est
+ * géré globalement dans styles.css plutôt que page par page.
  */
 export function MobileBottomNav() {
   const { user } = useAuth();
@@ -26,10 +26,16 @@ export function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-card/95 backdrop-blur-xl md:hidden"
+      className="fixed inset-x-4 bottom-4 z-50 md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="grid grid-cols-5">
+      <div
+        className="glass mx-auto flex max-w-md items-center justify-between rounded-full px-2 py-2 shadow-glass"
+        style={{
+          backdropFilter: "blur(18px) saturate(150%)",
+          WebkitBackdropFilter: "blur(18px) saturate(150%)",
+        }}
+      >
         {ITEMS.map((item) => {
           const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
           const badge = item.to === "/panier" ? cartCount : item.to === "/favoris" ? favCount : 0;
@@ -37,13 +43,15 @@ export function MobileBottomNav() {
             <Link
               key={item.to}
               to={item.to}
-              className={`relative flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-smooth ${
-                active ? "text-primary" : "text-muted-foreground"
+              className={`relative flex flex-1 flex-col items-center gap-0.5 rounded-full py-2 text-[10px] font-medium transition-smooth ${
+                active
+                  ? "bg-primary/15 text-primary"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <item.icon className="size-5" />
               {badge > 0 && (
-                <span className="absolute right-[calc(50%-18px)] top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-primary-foreground">
+                <span className="absolute right-[calc(50%-16px)] top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-semibold text-primary-foreground">
                   {badge > 9 ? "9+" : badge}
                 </span>
               )}
@@ -53,10 +61,10 @@ export function MobileBottomNav() {
         })}
         <Link
           to={user ? "/dashboard" : "/auth"}
-          className={`flex flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium transition-smooth ${
+          className={`flex flex-1 flex-col items-center gap-0.5 rounded-full py-2 text-[10px] font-medium transition-smooth ${
             pathname === "/dashboard" || pathname === "/auth"
-              ? "text-primary"
-              : "text-muted-foreground"
+              ? "bg-primary/15 text-primary"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <User className="size-5" />

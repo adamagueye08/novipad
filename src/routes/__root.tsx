@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { AnimatedBackground } from "@/components/site/AnimatedBackground";
+import { ScrollProgress } from "@/components/site/ScrollProgress";
 import { CartProvider } from "@/hooks/use-cart";
 import { FavoritesProvider } from "@/hooks/use-favorites";
 
@@ -130,6 +131,7 @@ function RootComponent() {
       <CartProvider>
         <FavoritesProvider>
           <AnimatedBackground />
+          <ScrollProgress />
           {/* Keyée par pathname : rejoue la transition d'entrée (fade + montée)
               à chaque changement de page, cf. .animate-page-enter dans styles.css. */}
           <div key={pathname} className="animate-page-enter">

@@ -56,7 +56,7 @@ export function FormulaCards({ className }: { className?: string }) {
   return (
     <div className={cn("grid gap-6 md:grid-cols-3", className)}>
       {cards.map((c) => (
-        <article key={c.key} className="glass hover-lift flex flex-col rounded-3xl p-7">
+        <article key={c.key} className="glass hover-tilt flex flex-col rounded-3xl p-7">
           <span
             className={cn(
               "flex h-11 w-11 items-center justify-center rounded-2xl text-primary-foreground",

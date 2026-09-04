@@ -68,71 +68,81 @@
 :root {
   --radius: 1rem;
 
-  --background: oklch(0.985 0.008 250);
-  --foreground: oklch(0.22 0.035 259);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.035 259);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.035 259);
+  /*
+   * Thème sombre « JokkoTech » — bleu nuit / turquoise / ambré.
+   * :root sert directement de thème par défaut (pas de bascule .dark
+   * activée dans l'app) : le site est sombre partout, en permanence.
+   */
+  --background: oklch(0.13 0.03 260);
+  --foreground: oklch(0.96 0.01 250);
+  --card: oklch(0.19 0.032 262);
+  --card-foreground: oklch(0.96 0.01 250);
+  --popover: oklch(0.19 0.032 262);
+  --popover-foreground: oklch(0.96 0.01 250);
 
-  --primary: oklch(0.47 0.16 259);
-  --primary-foreground: oklch(0.99 0.005 250);
-  --secondary: oklch(0.955 0.018 248);
-  --secondary-foreground: oklch(0.32 0.09 259);
-  --muted: oklch(0.958 0.012 248);
-  --muted-foreground: oklch(0.53 0.035 256);
-  --accent: oklch(0.93 0.045 245);
-  --accent-foreground: oklch(0.32 0.11 259);
+  --primary: oklch(0.78 0.15 189);
+  --primary-foreground: oklch(0.13 0.03 260);
+  --secondary: oklch(0.22 0.035 262);
+  --secondary-foreground: oklch(0.94 0.01 250);
+  --muted: oklch(0.2 0.032 262);
+  --muted-foreground: oklch(0.65 0.03 250);
+  --accent: oklch(0.24 0.045 262);
+  --accent-foreground: oklch(0.95 0.01 250);
 
-  --destructive: oklch(0.58 0.22 25);
-  --destructive-foreground: oklch(0.99 0.005 250);
-  --success: oklch(0.62 0.15 158);
-  --success-foreground: oklch(0.99 0.005 250);
-  --warning: oklch(0.78 0.15 75);
-  --warning-foreground: oklch(0.25 0.04 259);
+  --destructive: oklch(0.64 0.21 25);
+  --destructive-foreground: oklch(0.98 0.005 250);
+  --success: oklch(0.68 0.15 158);
+  --success-foreground: oklch(0.13 0.03 260);
+  --warning: oklch(0.75 0.14 70);
+  --warning-foreground: oklch(0.16 0.03 262);
 
-  --border: oklch(0.9 0.018 250);
-  --input: oklch(0.9 0.018 250);
-  --ring: oklch(0.55 0.14 259);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.78 0.15 189);
 
-  --chart-1: oklch(0.47 0.16 259);
-  --chart-2: oklch(0.66 0.13 232);
-  --chart-3: oklch(0.72 0.11 190);
-  --chart-4: oklch(0.62 0.15 158);
-  --chart-5: oklch(0.78 0.15 75);
+  --chart-1: oklch(0.78 0.15 189);
+  --chart-2: oklch(0.75 0.14 70);
+  --chart-3: oklch(0.62 0.13 258);
+  --chart-4: oklch(0.68 0.15 158);
+  --chart-5: oklch(0.65 0.18 20);
 
-  --sidebar: oklch(0.99 0.006 250);
-  --sidebar-foreground: oklch(0.24 0.035 259);
-  --sidebar-primary: oklch(0.47 0.16 259);
-  --sidebar-primary-foreground: oklch(0.99 0.005 250);
-  --sidebar-accent: oklch(0.955 0.02 248);
-  --sidebar-accent-foreground: oklch(0.3 0.09 259);
-  --sidebar-border: oklch(0.91 0.016 250);
-  --sidebar-ring: oklch(0.55 0.14 259);
+  --sidebar: oklch(0.16 0.03 262);
+  --sidebar-foreground: oklch(0.95 0.01 250);
+  --sidebar-primary: oklch(0.78 0.15 189);
+  --sidebar-primary-foreground: oklch(0.13 0.03 260);
+  --sidebar-accent: oklch(0.22 0.04 262);
+  --sidebar-accent-foreground: oklch(0.95 0.01 250);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.78 0.15 189);
+
+  /* Couleur d'accent « chaude » de la marque (ambré), distincte du token
+     sémantique --accent (surfaces de survol) ci-dessus — utilisée pour
+     les dégradés et lueurs turquoise → ambré. */
+  --brand-amber: oklch(0.75 0.14 70);
+  --brand-cyan: oklch(0.78 0.15 189);
 
   /* Surfaces de verre */
-  --glass-bg: oklch(1 0 0 / 62%);
-  --glass-border: oklch(1 0 0 / 70%);
+  --glass-bg: oklch(1 0 0 / 6%);
+  --glass-border: oklch(1 0 0 / 10%);
   --glass-blur: 22px;
 
   /* Dégradés */
   --gradient-hero: radial-gradient(
       120% 90% at 15% 0%,
-      oklch(0.93 0.06 250 / 90%) 0%,
+      oklch(0.3 0.09 220 / 55%) 0%,
       transparent 55%
     ),
-    radial-gradient(100% 80% at 95% 10%, oklch(0.9 0.08 232 / 70%) 0%, transparent 60%),
-    linear-gradient(180deg, oklch(0.99 0.006 250) 0%, oklch(0.96 0.015 248) 100%);
-  --gradient-primary: linear-gradient(135deg, oklch(0.5 0.17 262) 0%, oklch(0.62 0.14 232) 100%);
-  --gradient-subtle: linear-gradient(180deg, oklch(0.99 0.005 250) 0%, oklch(0.965 0.014 248) 100%);
-  --gradient-cash: linear-gradient(135deg, oklch(0.55 0.13 232) 0%, oklch(0.68 0.11 205) 100%);
-  --gradient-tontine: linear-gradient(135deg, oklch(0.52 0.14 285) 0%, oklch(0.62 0.13 258) 100%);
-  --gradient-flex: linear-gradient(135deg, oklch(0.55 0.15 175) 0%, oklch(0.66 0.13 205) 100%);
+    radial-gradient(100% 80% at 95% 10%, oklch(0.32 0.09 70 / 40%) 0%, transparent 60%),
+    linear-gradient(180deg, oklch(0.14 0.03 260) 0%, oklch(0.12 0.028 260) 100%);
+  --gradient-primary: linear-gradient(135deg, var(--brand-cyan) 0%, var(--brand-amber) 100%);
+  --gradient-subtle: linear-gradient(180deg, oklch(0.16 0.03 262) 0%, oklch(0.13 0.03 260) 100%);
+  --gradient-cash: linear-gradient(135deg, oklch(0.65 0.14 210) 0%, oklch(0.78 0.15 189) 100%);
+  --gradient-tontine: linear-gradient(135deg, oklch(0.55 0.15 285) 0%, oklch(0.62 0.13 258) 100%);
+  --gradient-flex: linear-gradient(135deg, oklch(0.72 0.15 55) 0%, var(--brand-amber) 100%);
 
-  --shadow-soft-value: 0 1px 2px oklch(0.3 0.06 259 / 6%), 0 12px 32px oklch(0.3 0.06 259 / 8%);
-  --shadow-glow-value: 0 20px 60px oklch(0.5 0.16 259 / 22%);
-  --shadow-glass-value:
-    inset 0 1px 0 oklch(1 0 0 / 60%), 0 20px 50px -20px oklch(0.35 0.07 259 / 28%);
+  --shadow-soft-value: 0 1px 2px oklch(0 0 0 / 35%), 0 12px 32px oklch(0 0 0 / 32%);
+  --shadow-glow-value: 0 20px 60px oklch(0.78 0.15 189 / 30%);
+  --shadow-glass-value: inset 0 1px 0 oklch(1 0 0 / 12%), 0 20px 50px -20px oklch(0 0 0 / 55%);
 
   --transition-smooth: 400ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -275,6 +285,31 @@
   }
 }
 
+@utility hover-tilt {
+  transition:
+    transform var(--transition-smooth),
+    box-shadow var(--transition-smooth);
+  transform-style: preserve-3d;
+
+  &:hover {
+    transform: perspective(900px) rotateX(2.5deg) rotateY(-3.5deg) translateY(-6px);
+    box-shadow: var(--shadow-glow-value);
+  }
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee-scroll 28s linear infinite;
+}
+
 @utility section {
   padding-block: 4.5rem;
 
@@ -377,6 +412,35 @@
 
 /* Transition de page : un léger fondu + montée, rejoué à chaque
    changement de route (voir __root.tsx, la div est keyée par pathname). */
+/* Grain subtil (texture bruit, opacity très faible) */
+@utility bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+@keyframes particle-rise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(-70vh) scale(0.4);
+    opacity: 0;
+  }
+}
+
+@utility animate-particle-rise {
+  animation-name: particle-rise;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+}
+
 @keyframes page-enter {
   from {
     opacity: 0;
@@ -392,11 +456,61 @@
   animation: page-enter 0.35s ease-out both;
 }
 
+/* Navbar flottante : glisse depuis le haut + fondu au chargement. */
+@keyframes nav-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-nav-in {
+  animation: nav-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Titres révélés mot par mot (RevealWords) */
+@keyframes word-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0);
+  }
+}
+
+@utility animate-word-in {
+  animation: word-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* Espace pour ne pas laisser le contenu caché derrière la barre de
    navigation mobile fixée en bas (MobileBottomNav), uniquement sur les
    largeurs où elle s'affiche (elle est md:hidden). */
 @media (max-width: 767px) {
   body {
-    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Filet de sécurité global : quiconque a demandé moins d'animations au
+   niveau système voit toutes les animations/transitions CSS du site
+   quasi instantanées, sans avoir à le gérer composant par composant.
+   (AnimatedBackground gère en plus son propre cas côté JS : le suivi de
+   souris et les particules ne se lancent même pas.) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
