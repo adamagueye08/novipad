@@ -14,10 +14,15 @@
 const PAYTECH_BASE_URL = "https://paytech.sn/api";
 
 function getPaytechConfig() {
-  const apiKey = process.env["PAYTECH_API_KEY"];
-  const apiSecret = process.env["PAYTECH_API_SECRET"];
-  const appUrl = process.env["PUBLIC_APP_URL"];
-  const env = process.env["PAYTECH_ENV"] === "prod" ? "prod" : "test";
+  // .trim() défensif : un espace ou retour à la ligne collé par erreur dans
+  // une clé (fréquent en copiant-collant depuis un champ masqué ou un
+  // terminal Windows) rend l'en-tête HTTP malformé, ce que PayTech rejette
+  // avec la même erreur "Format de requête invalide" qu'un JSON mal formé —
+  // ce trim() élimine cette classe entière de bug silencieux.
+  const apiKey = process.env["PAYTECH_API_KEY"]?.trim();
+  const apiSecret = process.env["PAYTECH_API_SECRET"]?.trim();
+  const appUrl = process.env["PUBLIC_APP_URL"]?.trim().replace(/\/+$/, "");
+  const env = process.env["PAYTECH_ENV"]?.trim() === "prod" ? "prod" : "test";
   if (!apiKey || !apiSecret || !appUrl) {
     throw new Error(
       "PayTech n'est pas configuré : définissez PAYTECH_API_KEY, PAYTECH_API_SECRET et PUBLIC_APP_URL dans les variables d'environnement.",
@@ -75,6 +80,17 @@ export async function createPaytechPayment(input: {
 
   const json = (await response.json().catch(() => null)) as PaytechRequestResponse | null;
   if (!json || json.success !== 1 || !json.redirect_url) {
+    // Trace de diagnostic (visible via `wrangler tail`) : montre la vraie
+    // réponse HTTP de PayTech sans jamais logger apiKey/apiSecret. Utile si
+    // l'erreur persiste malgré les correctifs déjà appliqués (item_price,
+    // ref_command, trim des secrets) — on aura la cause exacte au lieu de
+    // deviner à nouveau.
+    console.error("[PayTech] Échec de la requête de paiement", {
+      httpStatus: response.status,
+      refCommand: input.refCommand,
+      env,
+      rawResponse: json,
+    });
     throw new Error(json?.message ?? "Échec de la création du paiement PayTech.");
   }
 
