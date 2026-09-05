@@ -149,6 +149,40 @@ export function SiteHeader() {
           <div className="mt-3 flex items-center gap-2">
             <SupportButton />
             {!loading && <MessagesButton />}
+            <Button
+              asChild
+              variant="outline"
+              size="icon"
+              className="relative"
+              aria-label="Favoris"
+              onClick={() => setOpen(false)}
+            >
+              <Link to="/favoris">
+                <Heart className="size-4" />
+                {favCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                    {favCount > 9 ? "9+" : favCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="icon"
+              className="relative"
+              aria-label="Panier"
+              onClick={() => setOpen(false)}
+            >
+              <Link to="/panier">
+                <ShoppingCart className="size-4" />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                    {cartCount > 9 ? "9+" : cartCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
           </div>
           <div className="mt-3 flex flex-col gap-2">
             {user ? (
