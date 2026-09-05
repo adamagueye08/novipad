@@ -448,7 +448,12 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    /* "none" et non "translateY(0)" : n'importe quelle valeur de transform
+       autre que le mot-clé none crée un nouveau conteneur de référence pour
+       les descendants en position: fixed (comme MobileBottomNav), même une
+       fois l'animation terminée (fill-mode: both la fige à cet état pour
+       toujours) — ça les "piégeait" en bas de la PAGE au lieu de l'ÉCRAN. */
+    transform: none;
   }
 }
 
