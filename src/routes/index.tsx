@@ -148,17 +148,17 @@ function Landing() {
         {/* iPad en arrière-plan (derrière le texte, pas à côté) : positionné en
             grand format, léger flottement, estompé vers la gauche pour que le
             texte reste lisible par-dessus — sur mobile comme sur desktop. */}
-        <div className="pointer-events-none absolute inset-0 -z-0 flex items-center justify-end [perspective:1200px]">
+        <div className="pointer-events-none absolute inset-0 -z-0 flex items-center justify-end overflow-hidden [perspective:1200px]">
           <div className="absolute inset-0 rounded-full bg-gradient-primary opacity-20 blur-3xl" />
           <img
             src={heroIpad}
             alt="iPad Apple argent vu de face et de dos"
             width={1200}
             height={1200}
-            className="h-[120%] w-auto max-w-none animate-tilt opacity-70 drop-shadow-2xl [transform-style:preserve-3d] sm:h-[110%] md:h-[95%] md:w-[60%] md:max-w-2xl md:opacity-90"
+            className="h-auto w-[78%] max-w-xs animate-tilt opacity-30 drop-shadow-2xl [transform-style:preserve-3d] sm:w-[65%] sm:max-w-sm sm:opacity-40 md:h-[95%] md:w-[60%] md:max-w-2xl md:opacity-90"
             style={{
-              maskImage: "linear-gradient(90deg, transparent 0%, black 38%)",
-              WebkitMaskImage: "linear-gradient(90deg, transparent 0%, black 38%)",
+              maskImage: "linear-gradient(90deg, transparent 0%, black 60%)",
+              WebkitMaskImage: "linear-gradient(90deg, transparent 0%, black 60%)",
             }}
           />
         </div>
