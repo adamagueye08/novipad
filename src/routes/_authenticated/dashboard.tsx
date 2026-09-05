@@ -225,14 +225,16 @@ function DashboardPage() {
         </section>
 
         <section className="mt-10">
-          <Panel title="Mes commandes">
+          <Panel
+            title={orders.data?.length ? `Mes commandes (${orders.data.length})` : "Mes commandes"}
+          >
             {(orders.data?.length ?? 0) === 0 ? (
               <Empty
                 text="Aucune commande pour le moment."
                 cta={<Link to="/catalogue">Voir le catalogue</Link>}
               />
             ) : (
-              <ul className="divide-y divide-border/60">
+              <ul className="max-h-[26rem] divide-y divide-border/60 overflow-y-auto pr-1">
                 {orders.data!.map((o: any) => {
                   const delivery = o.deliveries?.[0];
                   const courier = delivery?.couriers;
