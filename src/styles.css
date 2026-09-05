@@ -453,9 +453,8 @@
     opacity: 1;
     /* "none" et non "translateY(0)" : n'importe quelle valeur de transform
        autre que le mot-clé none crée un nouveau conteneur de référence pour
-       les descendants en position: fixed (comme MobileBottomNav), même une
-       fois l'animation terminée (fill-mode: both la fige à cet état pour
-       toujours) — ça les "piégeait" en bas de la PAGE au lieu de l'ÉCRAN. */
+       tout descendant en position: fixed, même une fois l'animation
+       terminée (fill-mode: both la fige à cet état pour toujours). */
     transform: none;
   }
 }
@@ -496,15 +495,6 @@
 
 @utility animate-word-in {
   animation: word-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* Espace pour ne pas laisser le contenu caché derrière la barre de
-   navigation mobile fixée en bas (MobileBottomNav), uniquement sur les
-   largeurs où elle s'affiche (elle est md:hidden). */
-@media (max-width: 767px) {
-  body {
-    padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
-  }
 }
 
 /* Filet de sécurité global : quiconque a demandé moins d'animations au

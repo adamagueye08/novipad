@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -223,7 +222,6 @@ function CartPage() {
           </div>
         )}
       </main>
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Package, Phone, Truck, Bike, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
@@ -181,7 +180,6 @@ function DeliveryTrackingPage() {
           </div>
         )}
       </main>
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

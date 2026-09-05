@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { XCircle } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 
@@ -38,7 +37,6 @@ function PaymentCancelPage() {
           <Link to="/dashboard">Réessayer depuis mon espace</Link>
         </Button>
       </main>
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

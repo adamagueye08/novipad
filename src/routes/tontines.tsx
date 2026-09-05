@@ -5,7 +5,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Users, CalendarClock, Tablet } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { tontinesQuery } from "@/lib/api";
@@ -116,7 +115,6 @@ function TontinesPage() {
           </div>
         )}
       </main>
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

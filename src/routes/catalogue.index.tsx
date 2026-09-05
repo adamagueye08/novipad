@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ProductCard } from "@/components/site/ProductCard";
 import { Input } from "@/components/ui/input";
@@ -175,7 +174,6 @@ function CataloguePage() {
           </div>
         )}
       </main>
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

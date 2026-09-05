@@ -14,7 +14,6 @@ import {
 import heroIpad from "@/assets/hero-ipad.png";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { ProductCard } from "@/components/site/ProductCard";
 import { FormulaCards } from "@/components/site/FormulaCards";
@@ -406,7 +405,6 @@ function Landing() {
         </div>
       </section>
 
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

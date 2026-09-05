@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, TrendingUp } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { FormulaCards } from "@/components/site/FormulaCards";
 import { Button } from "@/components/ui/button";
@@ -147,7 +146,6 @@ function FormulasPage() {
           </Accordion>
         </section>
       </main>
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

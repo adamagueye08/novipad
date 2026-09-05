@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BadgeCheck, Tablet, ShieldCheck, Heart, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { productQuery } from "@/lib/api";
@@ -177,7 +176,6 @@ function ProductPage() {
           </div>
         )}
       </main>
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

@@ -20,7 +20,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Input } from "@/components/ui/input";
 import { formatFcfa, formatDate, progressPercent } from "@/lib/format";
@@ -445,7 +444,6 @@ function DashboardPage() {
           </Panel>
         </section>
       </main>
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );

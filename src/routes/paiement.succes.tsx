@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
-import { MobileBottomNav } from "@/components/site/MobileBottomNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 
@@ -39,7 +38,6 @@ function PaymentSuccessPage() {
           <Link to="/dashboard">Voir mon espace</Link>
         </Button>
       </main>
-      <MobileBottomNav />
       <SiteFooter />
     </div>
   );
