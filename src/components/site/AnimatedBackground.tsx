@@ -9,22 +9,26 @@ import { useEffect, useMemo, useRef } from "react";
  *    lentement en boucle, avec un léger effet de parallax au mouvement
  *    de la souris (profondeur différente par nappe).
  * 2. Une grille en perspective ("sol 3D") en bas de l'écran.
- * 3. ~20 particules lumineuses qui montent et s'estompent en boucle.
+ * 3. Quelques particules lumineuses qui montent et s'estompent en boucle.
  * 4. Un voile radial qui assombrit les bords + un grain subtil.
  *
  * Purement décoratif (pointer-events-none, aria-hidden). Respecte
  * prefers-reduced-motion : toutes les animations sont coupées si demandé.
+ *
+ * Perf : pas de boucle requestAnimationFrame qui tournerait en continu
+ * (coûteux en CPU/batterie sur toute la durée de vie du site, sur
+ * n'importe quelle page). La position ne se met à jour QUE sur un vrai
+ * mousemove, et légèrement limitée dans le temps (throttle) — le
+ * lissage visuel vient simplement de la transition CSS déjà posée sur
+ * chaque nappe (transition-transform), pas d'un lerp recalculé à 60fps.
  */
 export function AnimatedBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const target = useRef({ x: 0, y: 0 });
-  const current = useRef({ x: 0, y: 0 });
-  const raf = useRef<number | null>(null);
-  const reducedMotionRef = useRef(false);
+  const lastUpdate = useRef(0);
 
   const particles = useMemo(
     () =>
-      Array.from({ length: 20 }, (_, i) => ({
+      Array.from({ length: 12 }, (_, i) => ({
         id: i,
         left: Math.round(Math.random() * 1000) / 10, // 0–100%
         duration: 9 + Math.random() * 10, // 9–19s
@@ -35,33 +39,19 @@ export function AnimatedBackground() {
   );
 
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    reducedMotionRef.current = reduced;
-    if (reduced) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     function onMouseMove(e: MouseEvent) {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      target.current = { x: e.clientX / w - 0.5, y: e.clientY / h - 0.5 };
+      const now = performance.now();
+      if (now - lastUpdate.current < 60) return; // ~16fps suffit pour un effet de parallax discret
+      lastUpdate.current = now;
+      const el = containerRef.current;
+      if (!el) return;
+      el.style.setProperty("--mx", String(e.clientX / window.innerWidth - 0.5));
+      el.style.setProperty("--my", String(e.clientY / window.innerHeight - 0.5));
     }
     window.addEventListener("mousemove", onMouseMove, { passive: true });
-
-    function tick() {
-      current.current.x += (target.current.x - current.current.x) * 0.04;
-      current.current.y += (target.current.y - current.current.y) * 0.04;
-      const el = containerRef.current;
-      if (el) {
-        el.style.setProperty("--mx", String(current.current.x));
-        el.style.setProperty("--my", String(current.current.y));
-      }
-      raf.current = requestAnimationFrame(tick);
-    }
-    raf.current = requestAnimationFrame(tick);
-
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      if (raf.current) cancelAnimationFrame(raf.current);
-    };
+    return () => window.removeEventListener("mousemove", onMouseMove);
   }, []);
 
   return (
@@ -72,7 +62,7 @@ export function AnimatedBackground() {
     >
       {/* Nappes de couleur turquoise → ambré */}
       <div
-        className="animate-blob-a absolute -left-24 -top-24 size-[30rem] rounded-full opacity-45 blur-[130px] transition-transform duration-500 ease-out"
+        className="animate-blob-a absolute -left-24 -top-24 size-[30rem] rounded-full opacity-45 blur-[100px] transition-transform duration-500 ease-out"
         style={{
           background:
             "radial-gradient(circle, var(--brand-cyan) 0%, var(--brand-amber) 70%, transparent 100%)",
@@ -80,7 +70,7 @@ export function AnimatedBackground() {
         }}
       />
       <div
-        className="animate-blob-b absolute -right-24 top-1/3 size-[34rem] rounded-full opacity-40 blur-[140px] transition-transform duration-500 ease-out"
+        className="animate-blob-b absolute -right-24 top-1/3 size-[34rem] rounded-full opacity-40 blur-[110px] transition-transform duration-500 ease-out"
         style={{
           background:
             "radial-gradient(circle, var(--brand-amber) 0%, var(--brand-cyan) 70%, transparent 100%)",
@@ -88,7 +78,7 @@ export function AnimatedBackground() {
         }}
       />
       <div
-        className="animate-blob-a absolute -bottom-32 left-1/4 size-[28rem] rounded-full opacity-40 blur-[130px] [animation-delay:6s] transition-transform duration-500 ease-out"
+        className="animate-blob-a absolute -bottom-32 left-1/4 size-[28rem] rounded-full opacity-40 blur-[100px] [animation-delay:6s] transition-transform duration-500 ease-out"
         style={{
           background:
             "radial-gradient(circle, var(--brand-cyan) 0%, var(--brand-amber) 70%, transparent 100%)",
@@ -114,21 +104,20 @@ export function AnimatedBackground() {
       </div>
 
       {/* Particules lumineuses */}
-      {!reducedMotionRef.current &&
-        particles.map((p) => (
-          <span
-            key={p.id}
-            className="animate-particle-rise absolute bottom-0 rounded-full"
-            style={{
-              left: `${p.left}%`,
-              width: p.size,
-              height: p.size,
-              background: "var(--brand-cyan)",
-              animationDuration: `${p.duration}s`,
-              animationDelay: `${p.delay}s`,
-            }}
-          />
-        ))}
+      {particles.map((p) => (
+        <span
+          key={p.id}
+          className="animate-particle-rise absolute bottom-0 rounded-full"
+          style={{
+            left: `${p.left}%`,
+            width: p.size,
+            height: p.size,
+            background: "var(--brand-cyan)",
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+          }}
+        />
+      ))}
 
       {/* Voile radial (assombrit les bords) + grain */}
       <div

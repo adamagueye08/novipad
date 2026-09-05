@@ -11,7 +11,7 @@ import {
   Sparkles,
   Check,
 } from "lucide-react";
-import heroIpad from "@/assets/hero-ipad.png";
+import heroIpad from "@/assets/hero-ipad.webp";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
