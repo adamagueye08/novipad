@@ -358,7 +358,10 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    /* "none" plutôt que "translateY(0)" — même correctif que page-enter :
+       n'importe quelle valeur de transform autre que none fige un nouveau
+       conteneur de référence pour tout descendant en position: fixed. */
+    transform: none;
   }
 }
 
@@ -469,7 +472,7 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
@@ -486,8 +489,8 @@
   }
   to {
     opacity: 1;
-    filter: blur(0px);
-    transform: translateY(0);
+    filter: none;
+    transform: none;
   }
 }
 

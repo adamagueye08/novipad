@@ -48,8 +48,8 @@ export function Reveal({
       className={className}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0) blur(0px)" : "translateY(18px)",
-        filter: visible ? "blur(0px)" : "blur(4px)",
+        transform: visible ? "none" : "translateY(18px)",
+        filter: visible ? "none" : "blur(4px)",
         transition: `opacity 600ms cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 600ms cubic-bezier(0.22,1,0.36,1) ${delay}ms, filter 600ms ease ${delay}ms`,
       }}
     >
